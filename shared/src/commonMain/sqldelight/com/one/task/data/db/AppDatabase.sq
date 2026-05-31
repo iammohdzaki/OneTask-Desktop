@@ -1,0 +1,47 @@
+CREATE TABLE NotebookEntity (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    iconUrl TEXT,
+    iconName TEXT,
+    colorHex TEXT,
+    isPrivate INTEGER DEFAULT 0
+);
+
+CREATE TABLE PageEntity (
+    id TEXT NOT NULL PRIMARY KEY,
+    notebookId TEXT NOT NULL,
+    title TEXT NOT NULL,
+    updatedAt INTEGER NOT NULL,
+    FOREIGN KEY(notebookId) REFERENCES NotebookEntity(id) ON DELETE CASCADE
+);
+
+CREATE TABLE BlockEntity (
+    id TEXT NOT NULL PRIMARY KEY,
+    pageId TEXT NOT NULL,
+    type TEXT NOT NULL,
+    content TEXT NOT NULL,
+    sortOrder INTEGER NOT NULL,
+    FOREIGN KEY(pageId) REFERENCES PageEntity(id) ON DELETE CASCADE
+);
+
+-- Queries
+insertNotebook:
+INSERT OR REPLACE INTO NotebookEntity(id, name, iconUrl, iconName, colorHex, isPrivate) VALUES (?, ?, ?, ?, ?, ?);
+
+getAllNotebooks:
+SELECT * FROM NotebookEntity;
+
+insertPage:
+INSERT OR REPLACE INTO PageEntity(id, notebookId, title, updatedAt) VALUES (?, ?, ?, ?);
+
+getPagesForNotebook:
+SELECT * FROM PageEntity WHERE notebookId = ? ORDER BY updatedAt DESC;
+
+insertBlock:
+INSERT OR REPLACE INTO BlockEntity(id, pageId, type, content, sortOrder) VALUES (?, ?, ?, ?, ?);
+
+getBlocksForPage:
+SELECT * FROM BlockEntity WHERE pageId = ? ORDER BY sortOrder ASC;
+
+deleteBlocksForPage:
+DELETE FROM BlockEntity WHERE pageId = ?;

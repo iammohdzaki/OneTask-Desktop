@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">OneTask</string>
+    <string name="sidebar_pages">Pages</string>
+    <string name="sidebar_archive">Archive</string>
+    <string name="sidebar_trash">Trash</string>
+    
+    <string name="topbar_editor">Editor</string>
+    <string name="search_hint">Search in page...</string>
+    
+    <string name="empty_page_title">No Page Selected</string>
+    <string name="empty_page_message">Select a page to view</string>
+    
+    <string name="content_desc_book">Book</string>
+    <string name="content_desc_search">Search</string>
+    <string name="content_desc_check_circle">Check Circle</string>
+    <string name="content_desc_settings">Settings</string>
+    <string name="content_desc_add">Add</string>
+    <string name="content_desc_more">More</string>
+    
+    <string name="last_edited">Last edited 2m ago</string>
+    
+    <string name="hint_type_description">Type a description...</string>
+    <string name="hint_type_task">Type a new task...</string>
+    
+    <string name="table_header_name">Name</string>
+    <string name="table_header_role">Role</string>
+    <string name="table_header_status">Status</string>
+    <string name="image_prefix">Image:</string>
+</resources>

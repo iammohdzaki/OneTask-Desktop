@@ -15,7 +15,8 @@ class TaskRepository(
     private val database: AppDatabase
 ) {
     private val queries = database.appDatabaseQueries
-    
+    private val json = Json { ignoreUnknownKeys = true }
+
     // Notebooks
     fun getAllNotebooks(): Flow<List<Notebook>> {
         return queries.getAllNotebooks().asFlow().mapToList(Dispatchers.Default).map { list ->
@@ -27,22 +28,73 @@ class TaskRepository(
         queries.insertNotebook(notebook.id, notebook.name, notebook.iconUrl, notebook.iconName, notebook.colorHex, if (notebook.isPrivate) 1L else 0L)
     }
 
+
     // Pages
     fun getPagesForNotebook(notebookId: String): Flow<List<Page>> {
         return queries.getPagesForNotebook(notebookId).asFlow().mapToList(Dispatchers.Default).map { list ->
-            list.map { Page(it.id, it.notebookId, it.title, it.updatedAt) }
+            list.map { entity ->
+                val tags: List<String> = try {
+                    json.decodeFromString(entity.tags)
+                } catch (e: Exception) {
+                    emptyList()
+                }
+                Page(entity.id, entity.notebookId, entity.title, entity.description, entity.iconName, entity.updatedAt, tags, entity.isArchived == 1L)
+            }
+        }
+    }
+
+    fun getArchivedPages(): Flow<List<Page>> {
+        return queries.getArchivedPages().asFlow().mapToList(Dispatchers.Default).map { list ->
+            list.map { entity ->
+                val tags: List<String> = try {
+                    json.decodeFromString(entity.tags)
+                } catch (e: Exception) {
+                    emptyList()
+                }
+                Page(entity.id, entity.notebookId, entity.title, entity.description, entity.iconName, entity.updatedAt, tags, entity.isArchived == 1L)
+            }
         }
     }
 
     suspend fun insertPage(page: Page) = withContext(Dispatchers.Default) {
-        queries.insertPage(page.id, page.notebookId, page.title, page.updatedAt)
+        val tagsJson = json.encodeToString(page.tags)
+        queries.insertPage(page.id, page.notebookId, page.title, page.description, page.iconName, page.updatedAt, tagsJson, if (page.isArchived) 1L else 0L)
+    }
+
+    suspend fun updatePageTitle(pageId: String, title: String, updatedAt: Long) = withContext(Dispatchers.Default) {
+        queries.updatePageTitle(title, updatedAt, pageId)
+    }
+
+    suspend fun updatePageDescription(pageId: String, description: String?, updatedAt: Long) = withContext(Dispatchers.Default) {
+        queries.updatePageDescription(description, updatedAt, pageId)
+    }
+
+    suspend fun updatePageTags(pageId: String, tags: List<String>, updatedAt: Long) = withContext(Dispatchers.Default) {
+        val tagsJson = json.encodeToString(tags)
+        queries.updatePageTags(tagsJson, updatedAt, pageId)
+    }
+
+    suspend fun archivePage(pageId: String, updatedAt: Long) = withContext(Dispatchers.Default) {
+        queries.archivePage(updatedAt, pageId)
+    }
+
+    suspend fun restorePage(pageId: String, updatedAt: Long) = withContext(Dispatchers.Default) {
+        queries.restorePage(updatedAt, pageId)
+    }
+
+    suspend fun deletePage(pageId: String) = withContext(Dispatchers.Default) {
+        queries.deletePage(pageId)
+    }
+
+    suspend fun deleteAllArchivedPages() = withContext(Dispatchers.Default) {
+        queries.deleteAllArchivedPages()
     }
 
     // Blocks
     fun getBlocksForPage(pageId: String): Flow<List<ContentBlock>> {
         return queries.getBlocksForPage(pageId).asFlow().mapToList(Dispatchers.Default).map { list ->
             list.map { entity ->
-                Json.decodeFromString<ContentBlock>(entity.content)
+                json.decodeFromString<ContentBlock>(entity.content)
             }
         }
     }
@@ -51,7 +103,7 @@ class TaskRepository(
         queries.transaction {
             queries.deleteBlocksForPage(pageId)
             blocks.forEach { block ->
-                val contentJson = Json.encodeToString(block)
+                val contentJson = json.encodeToString(block)
                 val type = block::class.simpleName ?: "Unknown"
                 queries.insertBlock(block.id, pageId, type, contentJson, block.sortOrder.toLong())
             }

@@ -12,7 +12,7 @@ import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -28,6 +28,8 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun CheckboxBlockEditor(block: CheckboxBlock, onUpdate: (CheckboxBlock) -> Unit) {
+    var localText by remember(block.id) { mutableStateOf(block.text) }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -47,8 +49,11 @@ fun CheckboxBlockEditor(block: CheckboxBlock, onUpdate: (CheckboxBlock) -> Unit)
         )
         Spacer(modifier = Modifier.width(12.dp))
         BasicTextField(
-            value = block.text,
-            onValueChange = { onUpdate(block.copy(text = it)) },
+            value = localText,
+            onValueChange = {
+                localText = it
+                onUpdate(block.copy(text = it))
+            },
             textStyle = MaterialTheme.typography.bodyLarge.copy(
                 textDecoration = if (block.isChecked) TextDecoration.LineThrough else TextDecoration.None,
                 color = if (block.isChecked) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurface
@@ -56,7 +61,7 @@ fun CheckboxBlockEditor(block: CheckboxBlock, onUpdate: (CheckboxBlock) -> Unit)
             cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
             modifier = Modifier.weight(1f),
             decorationBox = { innerTextField ->
-                if (block.text.isEmpty()) {
+                if (localText.isEmpty()) {
                     Text(
                         text = stringResource(Res.string.hint_type_task), 
                         style = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f))

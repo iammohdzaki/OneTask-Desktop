@@ -1,3 +1,0 @@
-ALTER TABLE NotebookEntity ADD COLUMN iconName TEXT;
-ALTER TABLE NotebookEntity ADD COLUMN colorHex TEXT;
-ALTER TABLE NotebookEntity ADD COLUMN isPrivate INTEGER DEFAULT 0;

@@ -72,7 +72,7 @@ private fun WindowScope.CustomTitleBar(
             Row {
                 TitleBarIconButton(Icons.Default.Minimize, onClick = onMinimize)
                 TitleBarIconButton(Icons.Default.CropSquare, onClick = onMaximize)
-                TitleBarIconButton(Icons.Default.Close, onClick = onClose, hoverColor = Color(0xFFED4245)) // Keep red for close
+                TitleBarIconButton(Icons.Default.Close, onClick = onClose, hoverColor = MaterialTheme.colorScheme.error) // Use theme error color
             }
         }
     }

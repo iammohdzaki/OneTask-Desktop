@@ -26,21 +26,55 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.one.task.presentation.ui.components.CreateNotebookDialog
+import com.one.task.presentation.ui.components.CreatePageDialog
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LibraryBooks
 import androidx.compose.material3.Icon
+
+import com.one.task.presentation.ui.components.SettingsDialog
+
+import com.one.task.presentation.ui.components.ArchiveDialog
 
 @Composable
 fun WorkspaceScreen(viewModel: AppViewModel = koinViewModel()) {
     val state by viewModel.state.collectAsState()
     var showCreateNotebookDialog by remember { mutableStateOf(false) }
+    var showCreatePageDialog by remember { mutableStateOf(false) }
+    var showSettingsDialog by remember { mutableStateOf(false) }
+    var showArchiveDialog by remember { mutableStateOf(false) }
+
+    if (showSettingsDialog) {
+        SettingsDialog(onDismissRequest = { showSettingsDialog = false })
+    }
+
+    if (showArchiveDialog) {
+        ArchiveDialog(
+            archivedPages = state.archivedPages,
+            onDismissRequest = { showArchiveDialog = false },
+            onRestore = { viewModel.onIntent(AppIntent.RestorePage(it)) },
+            onDelete = { viewModel.onIntent(AppIntent.DeletePage(it)) },
+            onEmptyArchive = { viewModel.onIntent(AppIntent.EmptyArchive) }
+        )
+    }
 
     if (showCreateNotebookDialog) {
         CreateNotebookDialog(
             onDismissRequest = { showCreateNotebookDialog = false },
-            onCreate = { name, iconName, colorHex, isPrivate ->
-                viewModel.onIntent(AppIntent.CreateNotebook(name, iconName, colorHex, isPrivate))
+            onCreate = { name, iconName, colorHex, isPrivate, iconUrl ->
+                viewModel.onIntent(AppIntent.CreateNotebook(name, iconName, colorHex, isPrivate, iconUrl))
                 showCreateNotebookDialog = false
+            }
+        )
+    }
+    
+    if (showCreatePageDialog) {
+        CreatePageDialog(
+            onDismissRequest = { showCreatePageDialog = false },
+            onCreate = { title, description, iconName ->
+                state.activeNotebookId?.let { nbId ->
+                    viewModel.onIntent(AppIntent.CreatePage(nbId, title, description, iconName))
+                }
+                showCreatePageDialog = false
             }
         )
     }
@@ -56,7 +90,8 @@ fun WorkspaceScreen(viewModel: AppViewModel = koinViewModel()) {
                     notebooks = state.notebooks,
                     activeNotebookId = state.activeNotebookId,
                     onCreateNotebookClick = { showCreateNotebookDialog = true },
-                    onSelectNotebook = { viewModel.onIntent(AppIntent.SelectNotebook(it)) }
+                    onSelectNotebook = { viewModel.onIntent(AppIntent.SelectNotebook(it)) },
+                    onSettingsClick = { showSettingsDialog = true }
                 )
             }
             
@@ -65,11 +100,9 @@ fun WorkspaceScreen(viewModel: AppViewModel = koinViewModel()) {
                     pages = state.pagesForActiveNotebook,
                     selectedPageId = state.activePageId,
                     onSelect = { viewModel.onIntent(AppIntent.SelectPage(it.id)) },
-                    onCreatePage = {
-                        state.activeNotebookId?.let { nbId ->
-                            viewModel.onIntent(AppIntent.CreatePage(nbId, "New Page"))
-                        }
-                    }
+                    onCreatePage = { showCreatePageDialog = true },
+                    onArchivePage = { viewModel.onIntent(AppIntent.ArchivePage(it)) },
+                    onOpenArchive = { showArchiveDialog = true }
                 )
             }
             
@@ -77,6 +110,7 @@ fun WorkspaceScreen(viewModel: AppViewModel = koinViewModel()) {
                 val activePage = state.pagesForActiveNotebook.find { it.id == state.activePageId }
                 TopAppBar(
                     title = activePage?.title ?: stringResource(Res.string.empty_page_title),
+                    isSaving = state.isSaving,
                     showMenuIcon = !isExpanded
                 )
                 
@@ -85,14 +119,35 @@ fun WorkspaceScreen(viewModel: AppViewModel = koinViewModel()) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Icon(Icons.Default.LibraryBooks, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(64.dp))
                             Spacer(modifier = Modifier.height(16.dp))
-                            Text("Create a Notebook to get started", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(stringResource(Res.string.empty_notebook_prompt), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 } else if (activePage != null) {
                     MainEditorCanvas(
+                        pageId = activePage.id,
                         pageTitle = activePage.title,
+                        pageDescription = activePage.description,
+                        tags = activePage.tags,
                         blocks = state.activePageBlocks,
-                        onUpdateBlock = { viewModel.onIntent(AppIntent.UpdateBlock(it)) }
+                        onTitleChange = { newTitle ->
+                            viewModel.onIntent(AppIntent.RenamePageTitle(activePage.id, newTitle))
+                        },
+                        onDescriptionChange = { newDesc ->
+                            viewModel.onIntent(AppIntent.RenamePageDescription(activePage.id, newDesc))
+                        },
+                        onAddTag = { tag ->
+                            viewModel.onIntent(AppIntent.AddTag(activePage.id, tag))
+                        },
+                        onRemoveTag = { tag ->
+                            viewModel.onIntent(AppIntent.RemoveTag(activePage.id, tag))
+                        },
+                        onUpdateBlock = { viewModel.onIntent(AppIntent.UpdateBlock(it)) },
+                        onAddBlock = { block ->
+                            viewModel.onIntent(AppIntent.AddBlock(activePage.id, block))
+                        },
+                        onDeleteBlock = { blockId ->
+                            viewModel.onIntent(AppIntent.DeleteBlock(activePage.id, blockId))
+                        }
                     )
                 } else {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

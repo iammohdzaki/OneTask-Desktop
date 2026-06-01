@@ -22,7 +22,7 @@ compose.desktop {
         mainClass = "com.one.task.MainKt"
 
         nativeDistributions {
-            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
+            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb, TargetFormat.Exe)
             packageName = "com.one.task"
             packageVersion = "1.0.0"
         }

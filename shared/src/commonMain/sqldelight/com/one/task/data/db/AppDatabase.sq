@@ -7,11 +7,16 @@ CREATE TABLE NotebookEntity (
     isPrivate INTEGER DEFAULT 0
 );
 
+
 CREATE TABLE PageEntity (
     id TEXT NOT NULL PRIMARY KEY,
     notebookId TEXT NOT NULL,
     title TEXT NOT NULL,
+    description TEXT,
+    iconName TEXT,
     updatedAt INTEGER NOT NULL,
+    tags TEXT NOT NULL DEFAULT '[]',
+    isArchived INTEGER DEFAULT 0,
     FOREIGN KEY(notebookId) REFERENCES NotebookEntity(id) ON DELETE CASCADE
 );
 
@@ -32,10 +37,31 @@ getAllNotebooks:
 SELECT * FROM NotebookEntity;
 
 insertPage:
-INSERT OR REPLACE INTO PageEntity(id, notebookId, title, updatedAt) VALUES (?, ?, ?, ?);
+INSERT OR REPLACE INTO PageEntity(id, notebookId, title, description, iconName, updatedAt, tags, isArchived) VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+updatePageTitle:
+UPDATE PageEntity SET title = ?, updatedAt = ? WHERE id = ?;
+
+updatePageDescription:
+UPDATE PageEntity SET description = ?, updatedAt = ? WHERE id = ?;
+
+updatePageTags:
+UPDATE PageEntity SET tags = ?, updatedAt = ? WHERE id = ?;
 
 getPagesForNotebook:
-SELECT * FROM PageEntity WHERE notebookId = ? ORDER BY updatedAt DESC;
+SELECT * FROM PageEntity WHERE notebookId = ? AND isArchived = 0 ORDER BY updatedAt DESC;
+
+getArchivedPages:
+SELECT * FROM PageEntity WHERE isArchived = 1 ORDER BY updatedAt DESC;
+
+archivePage:
+UPDATE PageEntity SET isArchived = 1, updatedAt = ? WHERE id = ?;
+
+restorePage:
+UPDATE PageEntity SET isArchived = 0, updatedAt = ? WHERE id = ?;
+
+deleteAllArchivedPages:
+DELETE FROM PageEntity WHERE isArchived = 1;
 
 insertBlock:
 INSERT OR REPLACE INTO BlockEntity(id, pageId, type, content, sortOrder) VALUES (?, ?, ?, ?, ?);
@@ -45,3 +71,6 @@ SELECT * FROM BlockEntity WHERE pageId = ? ORDER BY sortOrder ASC;
 
 deleteBlocksForPage:
 DELETE FROM BlockEntity WHERE pageId = ?;
+
+deletePage:
+DELETE FROM PageEntity WHERE id = ?;

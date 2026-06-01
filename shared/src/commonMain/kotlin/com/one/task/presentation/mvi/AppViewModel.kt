@@ -6,6 +6,7 @@ import com.one.task.data.TaskRepository
 import com.one.task.domain.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 class AppViewModel(
     private val repository: TaskRepository
@@ -27,12 +28,28 @@ class AppViewModel(
             is AppIntent.SelectNotebook -> selectNotebook(intent.notebookId)
             is AppIntent.SelectPage -> selectPage(intent.pageId)
             is AppIntent.UpdateBlock -> updateBlock(intent.block)
-            is AppIntent.CreateNotebook -> createNotebook(intent.name, intent.iconName, intent.colorHex, intent.isPrivate)
-            is AppIntent.CreatePage -> createPage(intent.notebookId, intent.title)
+            is AppIntent.CreateNotebook -> createNotebook(intent.name, intent.iconName, intent.colorHex, intent.isPrivate, intent.iconUrl)
+            is AppIntent.CreatePage -> createPage(intent.notebookId, intent.title, intent.description, intent.iconName)
+            is AppIntent.DeletePage -> deletePage(intent.pageId)
+            is AppIntent.RenamePageTitle -> renamePageTitle(intent.pageId, intent.title)
+            is AppIntent.RenamePageDescription -> renamePageDescription(intent.pageId, intent.description)
+            is AppIntent.AddTag -> addTag(intent.pageId, intent.tag)
+            is AppIntent.RemoveTag -> removeTag(intent.pageId, intent.tag)
+            is AppIntent.AddBlock -> addBlock(intent.pageId, intent.block)
+            is AppIntent.DeleteBlock -> deleteBlock(intent.pageId, intent.blockId)
+            is AppIntent.ReorderBlocks -> reorderBlocks(intent.pageId, intent.blocks)
+            is AppIntent.ArchivePage -> archivePage(intent.pageId)
+            is AppIntent.RestorePage -> restorePage(intent.pageId)
+            is AppIntent.EmptyArchive -> emptyArchive()
         }
     }
 
     private fun loadInitialData() {
+        viewModelScope.launch {
+            repository.getArchivedPages().collect { archived ->
+                _state.update { it.copy(archivedPages = archived) }
+            }
+        }
         viewModelScope.launch {
             repository.getAllNotebooks().collect { notebooks ->
                 _state.update { it.copy(notebooks = notebooks) }
@@ -41,7 +58,7 @@ class AppViewModel(
                     val nb = Notebook(generateUuid(), "Project Phoenix", iconName = "FolderSpecial", colorHex = "#A078FF", isPrivate = false)
                     repository.insertNotebook(nb)
                     
-                    val p1 = Page(generateUuid(), nb.id, "Architecture Roadmap", currentTimeMillis())
+                    val p1 = Page(generateUuid(), nb.id, "Architecture Roadmap", null, "Document", currentTimeMillis())
                     repository.insertPage(p1)
                     
                     val b1 = TextBlock(generateUuid(), 0, "Welcome to the new system.")
@@ -79,8 +96,8 @@ class AppViewModel(
     }
 
     private fun updateBlock(block: ContentBlock) {
-        viewModelScope.launch {
-            val pageId = _state.value.activePageId ?: return@launch
+        runSaving {
+            val pageId = _state.value.activePageId ?: return@runSaving
             val currentBlocks = _state.value.activePageBlocks.toMutableList()
             val index = currentBlocks.indexOfFirst { it.id == block.id }
             if (index != -1) {
@@ -92,19 +109,118 @@ class AppViewModel(
         }
     }
 
-    private fun createNotebook(name: String, iconName: String, colorHex: String, isPrivate: Boolean) {
-        viewModelScope.launch {
-            val nb = Notebook(id = generateUuid(), name = name, iconName = iconName, colorHex = colorHex, isPrivate = isPrivate)
+    private fun createNotebook(name: String, iconName: String?, colorHex: String, isPrivate: Boolean, iconUrl: String? = null) {
+        runSaving {
+            val nb = Notebook(id = generateUuid(), name = name, iconName = iconName, colorHex = colorHex, isPrivate = isPrivate, iconUrl = iconUrl)
             repository.insertNotebook(nb)
             selectNotebook(nb.id)
         }
     }
 
-    private fun createPage(notebookId: String, title: String) {
-        viewModelScope.launch {
-            val page = Page(generateUuid(), notebookId, title, currentTimeMillis())
+    private fun createPage(notebookId: String, title: String, description: String?, iconName: String?) {
+        runSaving {
+            val page = Page(generateUuid(), notebookId, title, description, iconName, currentTimeMillis())
             repository.insertPage(page)
             selectPage(page.id)
+        }
+    }
+
+    private fun archivePage(pageId: String) {
+        runSaving {
+            if (_state.value.activePageId == pageId) {
+                _state.update { it.copy(activePageId = null, activePageBlocks = emptyList()) }
+            }
+            repository.archivePage(pageId, currentTimeMillis())
+        }
+    }
+
+    private fun restorePage(pageId: String) {
+        runSaving {
+            repository.restorePage(pageId, currentTimeMillis())
+        }
+    }
+
+    private fun emptyArchive() {
+        runSaving {
+            repository.deleteAllArchivedPages()
+        }
+    }
+
+    private fun deletePage(pageId: String) {
+        runSaving {
+            if (_state.value.activePageId == pageId) {
+                _state.update { it.copy(activePageId = null, activePageBlocks = emptyList()) }
+            }
+            repository.deletePage(pageId)
+        }
+    }
+
+    private fun renamePageTitle(pageId: String, title: String) {
+        runSaving {
+            repository.updatePageTitle(pageId, title, currentTimeMillis())
+        }
+    }
+
+    private fun renamePageDescription(pageId: String, description: String?) {
+        runSaving {
+            repository.updatePageDescription(pageId, description, currentTimeMillis())
+        }
+    }
+
+    private fun addTag(pageId: String, tag: String) {
+        runSaving {
+            val page = _state.value.pagesForActiveNotebook.find { it.id == pageId } ?: return@runSaving
+            val trimmed = tag.trim().removePrefix("#")
+            if (trimmed.isBlank() || page.tags.contains(trimmed)) return@runSaving
+            val newTags = page.tags + trimmed
+            repository.updatePageTags(pageId, newTags, currentTimeMillis())
+        }
+    }
+
+    private fun removeTag(pageId: String, tag: String) {
+        runSaving {
+            val page = _state.value.pagesForActiveNotebook.find { it.id == pageId } ?: return@runSaving
+            val newTags = page.tags.filter { it != tag }
+            repository.updatePageTags(pageId, newTags, currentTimeMillis())
+        }
+    }
+
+    private fun addBlock(pageId: String, block: ContentBlock) {
+        runSaving {
+            val currentBlocks = _state.value.activePageBlocks.toMutableList()
+            val maxOrder = currentBlocks.maxOfOrNull { it.sortOrder } ?: -1
+            val orderedBlock = when (block) {
+                is TextBlock -> block.copy(sortOrder = maxOrder + 1)
+                is CheckboxBlock -> block.copy(sortOrder = maxOrder + 1)
+                is ImageBlock -> block.copy(sortOrder = maxOrder + 1)
+                is TableBlock -> block.copy(sortOrder = maxOrder + 1)
+                is HeadingBlock -> block.copy(sortOrder = maxOrder + 1)
+                is DividerBlock -> block.copy(sortOrder = maxOrder + 1)
+            }
+            currentBlocks.add(orderedBlock)
+            repository.saveBlocksForPage(pageId, currentBlocks)
+        }
+    }
+
+    private fun deleteBlock(pageId: String, blockId: String) {
+        runSaving {
+            val currentBlocks = _state.value.activePageBlocks.filter { it.id != blockId }
+            repository.saveBlocksForPage(pageId, currentBlocks)
+        }
+    }
+
+    private fun reorderBlocks(pageId: String, blocks: List<ContentBlock>) {
+        runSaving {
+            repository.saveBlocksForPage(pageId, blocks)
+        }
+    }
+
+    private fun runSaving(block: suspend () -> Unit) {
+        viewModelScope.launch {
+            _state.update { it.copy(isSaving = true) }
+            block()
+            kotlinx.coroutines.delay(500.milliseconds)
+            _state.update { it.copy(isSaving = false) }
         }
     }
 }

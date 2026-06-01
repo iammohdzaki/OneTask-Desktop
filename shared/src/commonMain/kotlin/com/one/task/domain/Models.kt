@@ -17,7 +17,11 @@ data class Page(
     val id: String,
     val notebookId: String,
     val title: String,
-    val updatedAt: Long
+    val description: String? = null,
+    val iconName: String? = null,
+    val updatedAt: Long,
+    val tags: List<String> = emptyList(),
+    val isArchived: Boolean = false
 )
 
 @Serializable
@@ -57,5 +61,20 @@ data class TableBlock(
     override val sortOrder: Int,
     var title: String,
     var rows: Int,
-    var cols: Int
+    var cols: Int,
+    var data: List<List<String>> = emptyList()
+) : ContentBlock
+
+@Serializable
+data class HeadingBlock(
+    override val id: String,
+    override val sortOrder: Int,
+    var level: Int = 1,
+    var text: String = ""
+) : ContentBlock
+
+@Serializable
+data class DividerBlock(
+    override val id: String,
+    override val sortOrder: Int
 ) : ContentBlock

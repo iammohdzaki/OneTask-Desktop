@@ -10,6 +10,7 @@
     
     <string name="empty_page_title">No Page Selected</string>
     <string name="empty_page_message">Select a page to view</string>
+    <string name="empty_notebook_prompt">Create a Notebook to get started</string>
     
     <string name="content_desc_book">Book</string>
     <string name="content_desc_search">Search</string>
@@ -27,4 +28,35 @@
     <string name="table_header_role">Role</string>
     <string name="table_header_status">Status</string>
     <string name="image_prefix">Image:</string>
+    <string name="add_notebook">Add Notebook</string>
+
+    <!-- Editor: Page title -->
+    <string name="hint_page_title">Untitled</string>
+
+    <!-- Editor: Tags -->
+    <string name="hint_add_tag">Add tag...</string>
+    <string name="btn_remove_tag">Remove tag</string>
+    <string name="content_desc_add_tag">Add tag</string>
+
+    <!-- Editor: Block insert toolbar -->
+    <string name="block_type_text">Text</string>
+    <string name="block_type_heading">Heading</string>
+    <string name="block_type_task">Task</string>
+    <string name="block_type_divider">Divider</string>
+    <string name="block_type_image">Image</string>
+    <string name="block_type_table">Table</string>
+    <string name="toolbar_insert_block">Insert block</string>
+    <string name="content_desc_delete_block">Delete block</string>
+    <string name="content_desc_drag_handle">Drag handle</string>
+
+    <!-- Editor: Heading block placeholder -->
+    <string name="hint_heading">Heading</string>
+    
+    <!-- Create Page Dialog -->
+    <string name="create_page_title">Create Page</string>
+    <string name="page_title_label">Page Name</string>
+    <string name="page_description_label">Description (optional)</string>
+    <string name="select_icon_label">Select Icon</string>
+    <string name="create">Create</string>
+    <string name="cancel">Cancel</string>
 </resources>

@@ -55,14 +55,15 @@ class AppViewModel(
                 _state.update { it.copy(notebooks = notebooks) }
                 if (notebooks.isEmpty()) {
                     // Seed initial data for testing
-                    val nb = Notebook(generateUuid(), "Project Phoenix", iconName = "FolderSpecial", colorHex = "#A078FF", isPrivate = false)
+                    val nb = Notebook(generateUuid(), "Getting Started", iconName = "Lightbulb", colorHex = "#FFB869", isPrivate = false)
                     repository.insertNotebook(nb)
                     
-                    val p1 = Page(generateUuid(), nb.id, "Architecture Roadmap", null, "Document", currentTimeMillis())
+                    val p1 = Page(generateUuid(), nb.id, "Welcome to OneTask", "Your personal workspace.", "Rocket", currentTimeMillis())
                     repository.insertPage(p1)
                     
-                    val b1 = TextBlock(generateUuid(), 0, "Welcome to the new system.")
-                    repository.saveBlocksForPage(p1.id, listOf(b1))
+                    val blocks = InitialData.getGettingStartedBlocks()
+                    
+                    repository.saveBlocksForPage(p1.id, blocks)
                 } else if (_state.value.activeNotebookId == null) {
                     selectNotebook(notebooks.first().id)
                 }

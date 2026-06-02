@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -27,7 +28,6 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.one.task.CustomVerticalScrollbar
 import com.one.task.domain.*
@@ -51,10 +51,13 @@ fun MainEditorCanvas(
     onDeleteBlock: (String) -> Unit
 ) {
     val listState = rememberLazyListState()
-    
+
     // Local buffers for text fields to prevent typing lag/race conditions with the DB
     var localTitle by remember(pageId) { mutableStateOf(pageTitle) }
     var localDescription by remember(pageId) { mutableStateOf(pageDescription ?: "") }
+
+    var activeBlockId by remember { mutableStateOf<String?>(null) }
+    var pendingFormatEvent by remember { mutableStateOf<Pair<String, Long>?>(null) }
 
     Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
         LazyColumn(
@@ -140,7 +143,11 @@ fun MainEditorCanvas(
                         BlockRenderer(
                             block = block,
                             onUpdate = onUpdateBlock,
-                            onDelete = onDeleteBlock
+                            onDelete = onDeleteBlock,
+                            isActive = activeBlockId == block.id,
+                            onFocus = { activeBlockId = block.id },
+                            formatEvent = if (activeBlockId == block.id) pendingFormatEvent else null,
+                            onFormatApplied = { pendingFormatEvent = null }
                         )
                     }
 
@@ -155,9 +162,10 @@ fun MainEditorCanvas(
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 24.dp)
         ) {
-            BlockInsertToolbar(
+            EditorBottomToolbar(
                 currentBlockCount = blocks.size,
-                onAddBlock = onAddBlock
+                onAddBlock = onAddBlock,
+                onFormatClick = { pendingFormatEvent = Pair(it, com.one.task.domain.currentTimeMillis()) }
             )
         }
 
@@ -287,7 +295,7 @@ private fun TagChip(tag: String, onRemove: () -> Unit) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Block Insert Toolbar
+// Editor Bottom Toolbar (Formatting & Insert)
 // ─────────────────────────────────────────────────────────────────────────────
 
 private data class InsertEntry(
@@ -297,25 +305,26 @@ private data class InsertEntry(
 )
 
 @Composable
-private fun BlockInsertToolbar(
+private fun EditorBottomToolbar(
     currentBlockCount: Int,
-    onAddBlock: (ContentBlock) -> Unit
+    onAddBlock: (ContentBlock) -> Unit,
+    onFormatClick: (String) -> Unit
 ) {
     val nextOrder = currentBlockCount
 
     val blockTypes = listOf(
         InsertEntry(stringResource(Res.string.block_type_text), Icons.AutoMirrored.Filled.Subject)
-            { id, order -> TextBlock(id, order, "") },
+        { id, order -> TextBlock(id, order, "") },
         InsertEntry(stringResource(Res.string.block_type_heading), Icons.Default.Title)
-            { id, order -> HeadingBlock(id, order, 1, "") },
+        { id, order -> HeadingBlock(id, order, 1, "") },
         InsertEntry(stringResource(Res.string.block_type_task), Icons.Default.CheckBox)
-            { id, order -> CheckboxBlock(id, order, "", false) },
+        { id, order -> CheckboxBlock(id, order, "", false) },
         InsertEntry(stringResource(Res.string.block_type_divider), Icons.Default.HorizontalRule)
-            { id, order -> DividerBlock(id, order) },
+        { id, order -> DividerBlock(id, order) },
         InsertEntry(stringResource(Res.string.block_type_image), Icons.Default.Image)
-            { id, order -> ImageBlock(id, order, "") },
+        { id, order -> ImageBlock(id, order, "") },
         InsertEntry(stringResource(Res.string.block_type_table), Icons.Default.TableChart)
-            { id, order -> TableBlock(id, order, "", 3, 3, List(3) { List(3) { "" } }) },
+        { id, order -> TableBlock(id, order, "", 3, 3, List(3) { List(3) { "" } }) },
     )
 
     Row(
@@ -331,16 +340,51 @@ private fun BlockInsertToolbar(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        blockTypes.forEach { entry ->
-            BlockTypeButton(
-                label = entry.label,
-                icon = entry.icon,
-                onClick = {
-                    val newId = generateBlockId()
-                    onAddBlock(entry.makeBlock(newId, nextOrder))
-                }
-            )
+        // Formatting section
+        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            ToolbarIconButton(Icons.Default.FormatBold, "Bold") { onFormatClick("**") }
+            ToolbarIconButton(Icons.Default.FormatItalic, "Italic") { onFormatClick("*") }
+            ToolbarIconButton(Icons.Default.FormatUnderlined, "Underline") { onFormatClick("__") }
+            ToolbarIconButton(Icons.Default.FormatStrikethrough, "Strikethrough") { onFormatClick("~~") }
         }
+
+        Box(
+            modifier = Modifier.width(1.dp).height(24.dp)
+                .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+        )
+
+        // Insert section
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            blockTypes.forEach { entry ->
+                BlockTypeButton(
+                    label = entry.label,
+                    icon = entry.icon,
+                    onClick = {
+                        val newId = generateBlockId()
+                        onAddBlock(entry.makeBlock(newId, nextOrder))
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ToolbarIconButton(icon: ImageVector, description: String, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .size(32.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .focusProperties { canFocus = false }
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = description,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(20.dp)
+        )
     }
 }
 
@@ -352,7 +396,7 @@ private fun BlockTypeButton(
     onClick: () -> Unit
 ) {
     var isHovered by remember { mutableStateOf(false) }
-    
+
     Column(
         modifier = Modifier
             .clip(RoundedCornerShape(12.dp))

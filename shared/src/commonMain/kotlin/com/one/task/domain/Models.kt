@@ -52,7 +52,10 @@ data class ImageBlock(
     override val sortOrder: Int,
     var localPath: String,
     var caption: String = "",
-    var subtitle: String = ""
+    var subtitle: String = "",
+    var sizeMode: String = "Medium",
+    var showCaption: Boolean = true,
+    var url: String? = null
 ) : ContentBlock
 
 @Serializable

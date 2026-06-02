@@ -38,7 +38,11 @@ import org.jetbrains.compose.resources.stringResource
 fun BlockRenderer(
     block: ContentBlock,
     onUpdate: (ContentBlock) -> Unit,
-    onDelete: ((String) -> Unit)? = null
+    onDelete: ((String) -> Unit)? = null,
+    isActive: Boolean = false,
+    onFocus: () -> Unit = {},
+    formatEvent: Pair<String, Long>? = null,
+    onFormatApplied: () -> Unit = {}
 ) {
     var isHovered by remember { mutableStateOf(false) }
 
@@ -66,11 +70,11 @@ fun BlockRenderer(
                 .padding(horizontal = 4.dp)
         ) {
             when (block) {
-                is TextBlock -> TextBlockEditor(block) { onUpdate(it) }
-                is CheckboxBlock -> CheckboxBlockEditor(block) { onUpdate(it) }
+                is TextBlock -> TextBlockEditor(block, onUpdate, isActive, onFocus, formatEvent, onFormatApplied)
+                is CheckboxBlock -> CheckboxBlockEditor(block, onUpdate, isActive, onFocus, formatEvent, onFormatApplied)
                 is ImageBlock -> ImageBlockEditor(block) { onUpdate(it) }
                 is TableBlock -> TableBlockEditor(block) { onUpdate(it) }
-                is HeadingBlock -> HeadingBlockEditor(block) { onUpdate(it) }
+                is HeadingBlock -> HeadingBlockEditor(block, onUpdate, isActive, onFocus, formatEvent, onFormatApplied)
                 is DividerBlock -> DividerBlockEditor(block)
             }
         }

@@ -29,7 +29,7 @@ import org.jetbrains.compose.resources.stringResource
 fun main() = application {
     initKoin(DriverFactory())
 
-    val state = rememberWindowState(width = 1000.dp, height = 800.dp)
+    val state = rememberWindowState(width = 1200.dp, height = 800.dp, position = WindowPosition(Alignment.Center))
 
     Window(
         onCloseRequest = ::exitApplication,

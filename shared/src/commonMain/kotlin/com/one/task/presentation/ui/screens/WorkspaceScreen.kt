@@ -27,6 +27,7 @@ fun WorkspaceScreen(viewModel: AppViewModel = koinViewModel()) {
     var showCreatePageDialog by remember { mutableStateOf(false) }
     var showSettingsDialog by remember { mutableStateOf(false) }
     var showArchiveDialog by remember { mutableStateOf(false) }
+    var isSidebarCollapsed by remember { mutableStateOf(false) }
 
     if (showSettingsDialog) {
         SettingsDialog(onDismissRequest = { showSettingsDialog = false })
@@ -80,7 +81,7 @@ fun WorkspaceScreen(viewModel: AppViewModel = koinViewModel()) {
                 )
             }
 
-            if (isExpanded) {
+            if (isExpanded && !isSidebarCollapsed) {
                 PagesSidebar(
                     pages = state.pagesForActiveNotebook,
                     selectedPageId = state.activePageId,
@@ -96,7 +97,9 @@ fun WorkspaceScreen(viewModel: AppViewModel = koinViewModel()) {
                 TopAppBar(
                     title = activePage?.title ?: stringResource(Res.string.empty_page_title),
                     isSaving = state.isSaving,
-                    showMenuIcon = !isExpanded
+                    showMenuIcon = !isExpanded,
+                    isSidebarCollapsed = isSidebarCollapsed,
+                    onSidebarToggle = if (isExpanded) { { isSidebarCollapsed = !isSidebarCollapsed } } else null
                 )
 
                 if (state.activeNotebookId == null) {

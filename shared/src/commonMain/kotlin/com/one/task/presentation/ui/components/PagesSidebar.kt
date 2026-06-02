@@ -1,20 +1,17 @@
 package com.one.task.presentation.ui.components
 
 import androidx.compose.animation.core.*
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.outlined.EditNote
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.Archive
-import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material.icons.filled.LibraryBooks
+import androidx.compose.material.icons.outlined.EditNote
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,12 +23,16 @@ import androidx.compose.ui.input.pointer.PointerButton
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.one.task.domain.Page
 import com.one.task.presentation.ui.utils.IconHelper
-import onetask.shared.generated.resources.*
+import onetask.shared.generated.resources.Res
+import onetask.shared.generated.resources.create
+import onetask.shared.generated.resources.sidebar_archive
+import onetask.shared.generated.resources.sidebar_pages
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -57,9 +58,9 @@ fun PagesSidebar(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    stringResource(Res.string.sidebar_pages), 
+                    stringResource(Res.string.sidebar_pages),
                     style = MaterialTheme.typography.headlineMedium.copy(
-                        fontSize = 20.sp, 
+                        fontSize = 20.sp,
                         fontWeight = FontWeight.Bold
                     )
                 )
@@ -71,22 +72,22 @@ fun PagesSidebar(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        Icons.Default.Add, 
-                        contentDescription = "Add Page", 
-                        tint = MaterialTheme.colorScheme.primary, 
+                        Icons.Default.Add,
+                        contentDescription = "Add Page",
+                        tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(20.dp)
                     )
                 }
             }
             Text(
-                "Last edited 2m ago", 
-                style = MaterialTheme.typography.labelSmall, 
+                "Last edited 2m ago",
+                style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        
+
         Spacer(modifier = Modifier.height(16.dp))
-        
+
         if (pages.isEmpty()) {
             val infiniteTransition = rememberInfiniteTransition()
             val floatOffset by infiniteTransition.animateFloat(
@@ -98,7 +99,10 @@ fun PagesSidebar(
                 )
             )
 
-            Box(modifier = Modifier.weight(1f).fillMaxWidth().padding(horizontal = 24.dp), contentAlignment = Alignment.Center) {
+            Box(
+                modifier = Modifier.weight(1f).fillMaxWidth().padding(horizontal = 24.dp),
+                contentAlignment = Alignment.Center
+            ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Box(
                         modifier = Modifier
@@ -135,7 +139,12 @@ fun PagesSidebar(
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                         shape = RoundedCornerShape(8.dp)
                     ) {
-                        Icon(Icons.Default.Add, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(18.dp))
+                        Icon(
+                            Icons.Default.Add,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.size(18.dp)
+                        )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(stringResource(Res.string.create), fontWeight = FontWeight.Bold)
                     }
@@ -167,13 +176,13 @@ fun PagesSidebar(
             ) {
                 Icon(
                     imageVector = Icons.Outlined.Archive,
-                    contentDescription = "Archive",
+                    contentDescription = stringResource(Res.string.sidebar_archive),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(20.dp)
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
-                    text = "Archive",
+                    text = stringResource(Res.string.sidebar_archive),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -191,7 +200,7 @@ fun PageRow(
     onArchive: () -> Unit
 ) {
     var showMenu by remember { mutableStateOf(false) }
-    
+
     Box {
         Row(
             modifier = Modifier
@@ -204,7 +213,8 @@ fun PageRow(
                         while (true) {
                             val event = awaitPointerEvent()
                             if (event.type == PointerEventType.Press &&
-                                event.button == PointerButton.Secondary) {
+                                event.button == PointerButton.Secondary
+                            ) {
                                 showMenu = true
                             }
                         }
@@ -219,7 +229,7 @@ fun PageRow(
                     .fillMaxHeight()
                     .background(if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent)
             )
-            
+
             Row(
                 modifier = Modifier
                     .weight(1f)
@@ -263,7 +273,13 @@ fun PageRow(
                     onArchive()
                     showMenu = false
                 },
-                leadingIcon = { Icon(Icons.Outlined.Archive, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface) }
+                leadingIcon = {
+                    Icon(
+                        Icons.Outlined.Archive,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurface
+                    )
+                }
             )
         }
     }

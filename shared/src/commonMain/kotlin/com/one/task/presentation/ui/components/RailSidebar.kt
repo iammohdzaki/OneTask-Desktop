@@ -29,6 +29,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.one.task.domain.Notebook
 import com.one.task.domain.loadLocalImage
+import com.one.task.presentation.ui.utils.IconHelper
 import onetask.shared.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -104,16 +105,7 @@ fun RailSidebar(
                 animationSpec = tween(durationMillis = 200)
             )
 
-            val iconVector = when (notebook.iconName) {
-                "Book" -> Icons.Default.Book
-                "Folder" -> Icons.Default.Folder
-                "Lightbulb" -> Icons.Default.Lightbulb
-                "TrackChanges" -> Icons.Default.TrackChanges
-                "Code" -> Icons.Default.Code
-                "Palette" -> Icons.Default.Palette
-                "FolderSpecial" -> Icons.Default.FolderSpecial
-                else -> Icons.Default.FolderSpecial
-            }
+            val iconVector = IconHelper.getNotebookIcon(notebook.iconName)
 
             Box(
                 modifier = Modifier

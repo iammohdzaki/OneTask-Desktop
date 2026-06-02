@@ -1,66 +1,143 @@
 package com.one.task.presentation.ui.components.blocks
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.outlined.Image
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.one.task.domain.ImageBlock
-import com.one.task.domain.loadLocalImage
 import com.one.task.domain.pickImageFile
+import com.skydoves.landscapist.ImageOptions
+import com.skydoves.landscapist.coil3.CoilImage
 import onetask.shared.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun ImageBlockEditor(block: ImageBlock, onUpdate: (ImageBlock) -> Unit) {
     var localCaption by remember(block.id) { mutableStateOf(block.caption) }
     var localSubtitle by remember(block.id) { mutableStateOf(block.subtitle) }
+    var localUrl by remember(block.id) { mutableStateOf(block.url ?: "") }
+    var isEditing by remember { mutableStateOf(false) }
+    var isHovered by remember { mutableStateOf(false) }
+
+    val imageHeight = when (block.sizeMode) {
+        "Small" -> 200.dp
+        "Medium" -> 400.dp
+        "Large" -> 600.dp
+        else -> 400.dp
+    }
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+            .onPointerEvent(PointerEventType.Enter) { isHovered = true }
+            .onPointerEvent(PointerEventType.Exit) { isHovered = false }
     ) {
-        val bitmap = remember(block.localPath) {
-            if (block.localPath.isNotBlank()) loadLocalImage(block.localPath) else null
+        if (isEditing) {
+            // Editor Toolbar
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(stringResource(Res.string.image_size_label), style = MaterialTheme.typography.labelMedium)
+                        listOf("Small", "Medium", "Large").forEach { size ->
+                            val displaySize = when(size) {
+                                "Small" -> stringResource(Res.string.image_size_small)
+                                "Large" -> stringResource(Res.string.image_size_large)
+                                else -> stringResource(Res.string.image_size_medium)
+                            }
+                            FilterChip(
+                                selected = block.sizeMode == size,
+                                onClick = { onUpdate(block.copy(sizeMode = size)) },
+                                label = { Text(displaySize) }
+                            )
+                        }
+                        
+                        Spacer(modifier = Modifier.width(8.dp))
+                        
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Checkbox(
+                                checked = block.showCaption,
+                                onCheckedChange = { onUpdate(block.copy(showCaption = it)) }
+                            )
+                            Text(stringResource(Res.string.image_caption_label), style = MaterialTheme.typography.labelMedium)
+                        }
+                    }
+                    
+                    IconButton(onClick = { isEditing = false }) {
+                        Icon(Icons.Default.Check, contentDescription = stringResource(Res.string.content_desc_done_editing), tint = MaterialTheme.colorScheme.primary)
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                BasicTextField(
+                    value = localUrl,
+                    onValueChange = {
+                        localUrl = it
+                        onUpdate(block.copy(url = it.takeIf { it.isNotBlank() }))
+                    },
+                    textStyle = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
+                    cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.surfaceContainer, MaterialTheme.shapes.small)
+                        .padding(8.dp),
+                    decorationBox = { innerTextField ->
+                        if (localUrl.isEmpty()) {
+                            Text("Image URL (optional)", style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)))
+                        }
+                        innerTextField()
+                    }
+                )
+            }
         }
 
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(if (bitmap != null) 400.dp else 200.dp)
+                .height(imageHeight)
                 .background(MaterialTheme.colorScheme.surfaceContainerHighest)
-                .clickable {
+                .clickable(enabled = isEditing) {
                     val path = pickImageFile()
                     if (path != null) {
-                        onUpdate(block.copy(localPath = path))
+                        onUpdate(block.copy(localPath = "file://\$path"))
                     }
                 },
             contentAlignment = Alignment.Center
         ) {
-            if (bitmap != null) {
-                Image(
-                    bitmap = bitmap,
-                    contentDescription = block.caption,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Fit
+            val imageSource = if (!block.url.isNullOrBlank()) block.url else if (block.localPath.isNotBlank()) block.localPath else null
+            
+            if (imageSource != null) {
+                CoilImage(
+                    imageModel = { imageSource },
+                    imageOptions = ImageOptions(
+                        contentScale = ContentScale.Crop,
+                        alignment = Alignment.Center
+                    ),
+                    modifier = Modifier.fillMaxSize()
                 )
             } else {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -78,64 +155,106 @@ fun ImageBlockEditor(block: ImageBlock, onUpdate: (ImageBlock) -> Unit) {
                     )
                 }
             }
+            
+            if (!isEditing && isHovered) {
+                IconButton(
+                    onClick = { isEditing = true },
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(16.dp)
+                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f), shape = MaterialTheme.shapes.small)
+                ) {
+                    Icon(Icons.Default.Edit, contentDescription = "Edit Image")
+                }
+            }
         }
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surfaceContainer)
-                .padding(16.dp)
-        ) {
-            BasicTextField(
-                value = localCaption,
-                onValueChange = {
-                    localCaption = it
-                    onUpdate(block.copy(caption = it))
-                },
-                textStyle = MaterialTheme.typography.titleMedium.copy(
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontWeight = FontWeight.Bold
-                ),
-                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                modifier = Modifier.fillMaxWidth(),
-                decorationBox = { innerTextField ->
-                    if (localCaption.isEmpty()) {
+
+        if (block.showCaption) {
+            if (isEditing) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.surfaceContainer)
+                        .padding(16.dp)
+                ) {
+                    BasicTextField(
+                        value = localCaption,
+                        onValueChange = {
+                            localCaption = it
+                            onUpdate(block.copy(caption = it))
+                        },
+                        textStyle = MaterialTheme.typography.titleMedium.copy(
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontWeight = FontWeight.Bold
+                        ),
+                        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                        modifier = Modifier.fillMaxWidth(),
+                        decorationBox = { innerTextField ->
+                            if (localCaption.isEmpty()) {
+                                Text(
+                                    stringResource(Res.string.hint_add_caption),
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                )
+                            }
+                            innerTextField()
+                        }
+                    )
+                    
+                    Spacer(modifier = Modifier.height(4.dp))
+                    
+                    BasicTextField(
+                        value = localSubtitle,
+                        onValueChange = {
+                            localSubtitle = it
+                            onUpdate(block.copy(subtitle = it))
+                        },
+                        textStyle = MaterialTheme.typography.labelMedium.copy(
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        ),
+                        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                        modifier = Modifier.fillMaxWidth(),
+                        decorationBox = { innerTextField ->
+                            if (localSubtitle.isEmpty()) {
+                                Text(
+                                    stringResource(Res.string.hint_add_subtitle),
+                                    style = MaterialTheme.typography.labelMedium.copy(
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                                    )
+                                )
+                            }
+                            innerTextField()
+                        }
+                    )
+                }
+            } else if (localCaption.isNotBlank() || localSubtitle.isNotBlank()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    if (localCaption.isNotBlank()) {
                         Text(
-                            "Add a caption...",
+                            text = localCaption,
                             style = MaterialTheme.typography.titleMedium.copy(
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
                             )
                         )
                     }
-                    innerTextField()
-                }
-            )
-            
-            Spacer(modifier = Modifier.height(4.dp))
-            
-            BasicTextField(
-                value = localSubtitle,
-                onValueChange = {
-                    localSubtitle = it
-                    onUpdate(block.copy(subtitle = it))
-                },
-                textStyle = MaterialTheme.typography.labelMedium.copy(
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                ),
-                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                modifier = Modifier.fillMaxWidth(),
-                decorationBox = { innerTextField ->
-                    if (localSubtitle.isEmpty()) {
+                    if (localSubtitle.isNotBlank()) {
                         Text(
-                            "Add a subtitle...",
+                            text = localSubtitle,
                             style = MaterialTheme.typography.labelMedium.copy(
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         )
                     }
-                    innerTextField()
                 }
-            )
+            }
         }
     }
 }

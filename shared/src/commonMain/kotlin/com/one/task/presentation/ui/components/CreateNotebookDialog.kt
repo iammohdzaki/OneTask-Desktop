@@ -36,6 +36,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import com.one.task.domain.pickImageFile
 import com.one.task.domain.loadLocalImage
+import com.one.task.presentation.ui.utils.IconHelper
 
 @Composable
 fun CreateNotebookDialog(
@@ -163,7 +164,8 @@ fun CreateNotebookDialog(
                             }
                         }
 
-                        icons.forEach { (name, icon) ->
+                        IconHelper.notebookIcons.forEach { name ->
+                            val icon = IconHelper.getNotebookIcon(name)
                             val isSelected = selectedIcon == name
                             Box(
                                 modifier = Modifier

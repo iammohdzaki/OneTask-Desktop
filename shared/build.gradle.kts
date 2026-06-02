@@ -33,10 +33,12 @@ kotlin {
             implementation(libs.datastore.preferences.core)
             implementation(libs.sqldelight.coroutines)
             implementation(libs.kotlinx.serialization.json)
+            implementation(libs.landscapist.coil3)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
             implementation(libs.sqldelight.sqlite.driver)
+            implementation(libs.kotlinx.coroutines.test)
         }
         jvmMain.dependencies {
             implementation(libs.sqldelight.sqlite.driver)

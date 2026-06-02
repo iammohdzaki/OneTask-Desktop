@@ -4,6 +4,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Assignment
 import androidx.compose.material.icons.automirrored.outlined.FormatListBulleted
 import androidx.compose.material.icons.outlined.*
+import androidx.compose.material.icons.filled.*
 import androidx.compose.ui.graphics.vector.ImageVector
 
 object IconHelper {
@@ -33,6 +34,29 @@ object IconHelper {
             "Assignment" -> Icons.AutoMirrored.Outlined.Assignment
             "Flag" -> Icons.Outlined.Flag
             else -> Icons.Outlined.Description
+        }
+    }
+
+    val notebookIcons = listOf(
+        "FolderSpecial",
+        "Book",
+        "Folder",
+        "Lightbulb",
+        "TrackChanges",
+        "Code",
+        "Palette"
+    )
+
+    fun getNotebookIcon(name: String?): ImageVector {
+        return when (name) {
+            "Book" -> Icons.Default.Book
+            "Folder" -> Icons.Default.Folder
+            "Lightbulb" -> Icons.Default.Lightbulb
+            "TrackChanges" -> Icons.Default.TrackChanges
+            "Code" -> Icons.Default.Code
+            "Palette" -> Icons.Default.Palette
+            "FolderSpecial" -> Icons.Default.FolderSpecial
+            else -> Icons.Default.FolderSpecial
         }
     }
 }

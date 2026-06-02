@@ -8,28 +8,35 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-class SettingsRepository(private val dataStore: DataStore<Preferences>) {
+interface SettingsRepository {
+    val themeMode: Flow<String>
+    val passwordAuthEnabled: Flow<Boolean>
+    suspend fun setThemeMode(mode: String)
+    suspend fun setPasswordAuthEnabled(enabled: Boolean)
+}
+
+class DefaultSettingsRepository(private val dataStore: DataStore<Preferences>) : SettingsRepository {
 
     companion object {
         val THEME_MODE = stringPreferencesKey("theme_mode")
         val PASSWORD_AUTH = booleanPreferencesKey("password_auth")
     }
 
-    val themeMode: Flow<String> = dataStore.data.map { prefs ->
+    override val themeMode: Flow<String> = dataStore.data.map { prefs ->
         prefs[THEME_MODE] ?: "System"
     }
 
-    val passwordAuthEnabled: Flow<Boolean> = dataStore.data.map { prefs ->
+    override val passwordAuthEnabled: Flow<Boolean> = dataStore.data.map { prefs ->
         prefs[PASSWORD_AUTH] ?: false
     }
 
-    suspend fun setThemeMode(mode: String) {
+    override suspend fun setThemeMode(mode: String) {
         dataStore.edit { prefs ->
             prefs[THEME_MODE] = mode
         }
     }
 
-    suspend fun setPasswordAuthEnabled(enabled: Boolean) {
+    override suspend fun setPasswordAuthEnabled(enabled: Boolean) {
         dataStore.edit { prefs ->
             prefs[PASSWORD_AUTH] = enabled
         }

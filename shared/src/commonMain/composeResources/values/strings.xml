@@ -59,4 +59,35 @@
     <string name="select_icon_label">Select Icon</string>
     <string name="create">Create</string>
     <string name="cancel">Cancel</string>
+    <!-- Table Block -->
+    <string name="table_title_hint">Table Title</string>
+    <string name="content_desc_add_row_below">Add Row Below</string>
+    <string name="content_desc_remove_last_row">Remove Last Row</string>
+    <string name="content_desc_add_column_right">Add Column Right</string>
+    <string name="content_desc_remove_last_col">Remove Last Col</string>
+    <string name="content_desc_done_editing">Done Editing</string>
+    <string name="content_desc_edit_table">Edit Table</string>
+
+    <!-- Image Block -->
+    <string name="image_size_label">Size:</string>
+    <string name="image_size_small">Small</string>
+    <string name="image_size_medium">Medium</string>
+    <string name="image_size_large">Large</string>
+    <string name="image_caption_label">Caption</string>
+    <string name="hint_add_caption">Add a caption...</string>
+    <string name="hint_add_subtitle">Add a subtitle...</string>
+    <string name="content_desc_edit_image">Edit Image</string>
+
+    <!-- Global / Sidebar -->
+    <string name="page_default_title">New Page</string>
+    <string name="btn_add_page">Add Page</string>
+    <string name="category_uncategorized">UNCATEGORIZED</string>
+    <string name="btn_delete_category">Delete Category</string>
+    <string name="btn_delete_page">Delete Page</string>
+    <string name="app_initials">OT</string>
+    <string name="content_desc_back">Back</string>
+    <string name="empty_pages_title">It\'s quiet here...</string>
+    <string name="empty_pages_message">Create a page to start capturing your thoughts and ideas.</string>
+    <string name="status_saving">Saving...</string>
+    <string name="status_saved">Saved</string>
 </resources>

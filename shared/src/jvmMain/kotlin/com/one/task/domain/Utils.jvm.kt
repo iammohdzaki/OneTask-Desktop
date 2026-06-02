@@ -5,7 +5,10 @@ import org.jetbrains.compose.resources.decodeToImageBitmap
 import java.awt.FileDialog
 import java.awt.Frame
 import java.io.File
+import java.net.URL
 import java.util.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 actual fun pickFile(title: String, allowedExtensions: List<String>): String? {
     val dialog = FileDialog(null as Frame?, title, FileDialog.LOAD)
@@ -30,6 +33,15 @@ actual fun loadLocalImage(path: String): ImageBitmap? {
         if (file.exists()) {
             file.inputStream().buffered().use { it.readAllBytes().decodeToImageBitmap() }
         } else null
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null
+    }
+}
+
+actual suspend fun loadNetworkImage(url: String): ImageBitmap? = withContext(Dispatchers.IO) {
+    try {
+        URL(url).openStream().buffered().use { it.readAllBytes().decodeToImageBitmap() }
     } catch (e: Exception) {
         e.printStackTrace()
         null

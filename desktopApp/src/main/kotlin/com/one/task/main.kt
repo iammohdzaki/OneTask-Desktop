@@ -20,6 +20,7 @@ import com.one.task.data.DriverFactory
 import com.one.task.di.initKoin
 import com.one.task.presentation.ui.App
 import com.one.task.presentation.ui.components.hoverableBackground
+import com.one.task.domain.Logger
 import onetask.shared.generated.resources.Res
 import onetask.shared.generated.resources.app_name
 import onetask.shared.generated.resources.launcher
@@ -27,6 +28,7 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 fun main() = application {
+    Logger.i("Main", "Starting application...")
     initKoin(DriverFactory())
 
     val state = rememberWindowState(width = 1200.dp, height = 800.dp, position = WindowPosition(Alignment.Center))

@@ -24,7 +24,7 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb, TargetFormat.Exe)
             packageName = "com.one.task"
-            packageVersion = "1.0.0"
+            packageVersion = project.findProperty("appVersion")?.toString() ?: "1.0.0"
         }
     }
 }

@@ -45,7 +45,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build and Package
-        run: ./gradlew :desktopApp:${{ matrix.task }} -Pcompose.desktop.application.nativeDistributions.packageVersion=${{ github.event.inputs.version_name }}
+        run: ./gradlew :desktopApp:${{ matrix.task }} "-PappVersion=${{ github.event.inputs.version_name }}"
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4

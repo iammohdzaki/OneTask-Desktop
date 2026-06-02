@@ -8,12 +8,11 @@ plugins {
 
 dependencies {
     implementation(projects.shared)
-
+    implementation(libs.compose.components.resources)
     implementation(compose.desktop.currentOs)
-    implementation(compose.material3)
-    implementation(compose.materialIconsExtended)
+    implementation(libs.compose.material3)
+    implementation(libs.compose.icons.extended)
     implementation(libs.kotlinx.coroutinesSwing)
-
     implementation(libs.compose.uiToolingPreview)
 }
 
@@ -25,6 +24,15 @@ compose.desktop {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb, TargetFormat.Exe)
             packageName = "com.one.task"
             packageVersion = project.findProperty("appVersion")?.toString() ?: "1.0.0"
+            windows {
+                iconFile.set(project.file("metadata/icon.ico"))
+            }
+            macOS {
+                iconFile.set(project.file("metadata/icon.icns"))
+            }
+            linux {
+                iconFile.set(project.file("metadata/icon.png"))
+            }
         }
     }
 }

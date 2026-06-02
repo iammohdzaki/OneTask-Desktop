@@ -3,6 +3,12 @@ package com.one.task
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.window.WindowDraggableArea
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.CropSquare
+import androidx.compose.material.icons.filled.Minimize
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -10,26 +16,26 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.*
-import androidx.compose.foundation.window.WindowDraggableArea
 import com.one.task.data.DriverFactory
 import com.one.task.di.initKoin
 import com.one.task.presentation.ui.App
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.CropSquare
-import androidx.compose.material.icons.filled.Minimize
 import com.one.task.presentation.ui.components.hoverableBackground
+import onetask.shared.generated.resources.Res
+import onetask.shared.generated.resources.app_name
+import onetask.shared.generated.resources.launcher
+import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 fun main() = application {
     initKoin(DriverFactory())
-    
+
     val state = rememberWindowState(width = 1000.dp, height = 800.dp)
-    
+
     Window(
         onCloseRequest = ::exitApplication,
         state = state,
-        title = "OneTask",
+        title = stringResource(Res.string.app_name),
+        icon = painterResource(Res.drawable.launcher),
         undecorated = true,
         transparent = false
     ) {
@@ -38,8 +44,9 @@ fun main() = application {
                 CustomTitleBar(
                     onClose = ::exitApplication,
                     onMinimize = { state.isMinimized = true },
-                    onMaximize = { 
-                        state.placement = if (state.placement == WindowPlacement.Maximized) WindowPlacement.Floating else WindowPlacement.Maximized 
+                    onMaximize = {
+                        state.placement =
+                            if (state.placement == WindowPlacement.Maximized) WindowPlacement.Floating else WindowPlacement.Maximized
                     }
                 )
             }
@@ -62,17 +69,21 @@ private fun WindowScope.CustomTitleBar(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                "OneTask",
+                stringResource(Res.string.app_name),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.labelMedium,
                 modifier = Modifier.padding(start = 16.dp).weight(1f)
             )
-            
+
             // Window controls
             Row {
                 TitleBarIconButton(Icons.Default.Minimize, onClick = onMinimize)
                 TitleBarIconButton(Icons.Default.CropSquare, onClick = onMaximize)
-                TitleBarIconButton(Icons.Default.Close, onClick = onClose, hoverColor = MaterialTheme.colorScheme.error) // Use theme error color
+                TitleBarIconButton(
+                    Icons.Default.Close,
+                    onClick = onClose,
+                    hoverColor = MaterialTheme.colorScheme.error
+                ) // Use theme error color
             }
         }
     }

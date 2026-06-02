@@ -4,6 +4,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -14,12 +15,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -29,16 +25,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.onPointerEvent
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.one.task.domain.Notebook
-import onetask.shared.generated.resources.Res
-import onetask.shared.generated.resources.add_notebook
-import onetask.shared.generated.resources.content_desc_settings
-import org.jetbrains.compose.resources.stringResource
-import androidx.compose.foundation.Image
-import androidx.compose.ui.layout.ContentScale
 import com.one.task.domain.loadLocalImage
+import onetask.shared.generated.resources.*
+import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -62,15 +55,13 @@ fun RailSidebar(
             modifier = Modifier
                 .size(48.dp)
                 .clip(RoundedCornerShape(12.dp))
-                .background(MaterialTheme.colorScheme.primary)
+                .background(MaterialTheme.colorScheme.primaryContainer)
                 .clickable { },
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                "OT",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onPrimary,
-                fontWeight = FontWeight.Bold
+            Image(
+                painter = painterResource(Res.drawable.launcher),
+                contentDescription = stringResource(Res.string.app_name)
             )
         }
 
@@ -85,29 +76,29 @@ fun RailSidebar(
         notebooks.forEach { notebook ->
             val isSelected = notebook.id == activeNotebookId
             var isHovered by remember { mutableStateOf(false) }
-            
+
             val iconColor = if (notebook.colorHex != null) Color(
                 notebook.colorHex.removePrefix("#").toLong(16) or 0xFF000000
             ) else MaterialTheme.colorScheme.primary
-            
+
             // Animations
             val animatedScale by animateFloatAsState(
                 targetValue = if (isSelected) 1.15f else if (isHovered) 1.05f else 1.0f,
                 animationSpec = tween(durationMillis = 200)
             )
-            
+
             val animatedBackground by animateColorAsState(
-                targetValue = if (isSelected) iconColor.copy(alpha = 0.15f) 
-                              else if (isHovered) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f) 
-                              else Color.Transparent,
+                targetValue = if (isSelected) iconColor.copy(alpha = 0.15f)
+                else if (isHovered) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
+                else Color.Transparent,
                 animationSpec = tween(durationMillis = 200)
             )
-            
+
             val iconTint by animateColorAsState(
                 targetValue = if (isSelected || isHovered) iconColor else MaterialTheme.colorScheme.onSurfaceVariant,
                 animationSpec = tween(durationMillis = 200)
             )
-            
+
             val indicatorHeight by animateDpAsState(
                 targetValue = if (isSelected) 24.dp else if (isHovered) 8.dp else 0.dp,
                 animationSpec = tween(durationMillis = 200)
@@ -213,12 +204,12 @@ fun RailIcon(
     onClick: () -> Unit
 ) {
     var isHovered by remember { mutableStateOf(false) }
-    
+
     val animatedBackground by animateColorAsState(
         targetValue = if (isHovered) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f) else background,
         animationSpec = tween(durationMillis = 200)
     )
-    
+
     val animatedScale by animateFloatAsState(
         targetValue = if (isHovered) 1.1f else 1.0f,
         animationSpec = tween(durationMillis = 200)

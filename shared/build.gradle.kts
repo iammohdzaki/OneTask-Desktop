@@ -12,6 +12,16 @@ compose.resources {
 
 kotlin {
     jvm()
+
+    targets.configureEach {
+        compilations.configureEach {
+            compileTaskProvider.configure {
+                compilerOptions {
+                    freeCompilerArgs.add("-Xexpect-actual-classes")
+                }
+            }
+        }
+    }
     
     sourceSets {
         commonMain.dependencies {
@@ -42,6 +52,7 @@ kotlin {
         }
         jvmMain.dependencies {
             implementation(libs.sqldelight.sqlite.driver)
+            implementation(libs.slf4j.simple)
         }
     }
 }

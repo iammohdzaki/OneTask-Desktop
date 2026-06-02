@@ -5,7 +5,7 @@ import org.jetbrains.compose.resources.decodeToImageBitmap
 import java.awt.FileDialog
 import java.awt.Frame
 import java.io.File
-import java.net.URL
+import java.net.URI
 import java.util.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -41,7 +41,7 @@ actual fun loadLocalImage(path: String): ImageBitmap? {
 
 actual suspend fun loadNetworkImage(url: String): ImageBitmap? = withContext(Dispatchers.IO) {
     try {
-        URL(url).openStream().buffered().use { it.readAllBytes().decodeToImageBitmap() }
+        URI(url).toURL().openStream().buffered().use { it.readAllBytes().decodeToImageBitmap() }
     } catch (e: Exception) {
         e.printStackTrace()
         null

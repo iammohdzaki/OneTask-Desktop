@@ -11,8 +11,10 @@ datastore = "1.1.1"
 serialization = "1.7.3"
 icons-extended = "1.7.3"
 landscapist = "2.4.4"
+slf4j = "2.0.16"
 
 [libraries]
+slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
 landscapist-coil3 = { module = "com.github.skydoves:landscapist-coil3", version.ref = "landscapist" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 androidx-lifecycle-viewmodelCompose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "androidx-lifecycle" }

@@ -1,45 +1,65 @@
 # OneTask
 
-A privacy-first, offline personal workspace application built with Kotlin Multiplatform and Compose Multiplatform. OneTask brings together a sleek, Notion-style user interface with a robust local-first architecture.
+[![GitHub License](https://img.shields.io/github/license/iammohdzaki/OneTask-Desktop)](LICENSE)
+[![GitHub Release](https://img.shields.io/github/v/release/iammohdzaki/OneTask-Desktop)](https://github.com/iammohdzaki/OneTask-Desktop/releases)
+[![Build Status](https://github.com/iammohdzaki/OneTask-Desktop/actions/workflows/release.yml/badge.svg)](https://github.com/iammohdzaki/OneTask-Desktop/actions/workflows/release.yml)
+![Platform Support](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-blue)
+
+OneTask is a flexible, block-based workspace application built with **Compose Multiplatform**. It allows you to organize your thoughts, tasks, and data in a unified environment that feels local-first and high-performance.
+
+![OneTask Screenshot](images/screenshot.png)
 
 ## Features
 
-- **Offline-First by Design:** Powered by a local SQLite database using SQLDelight, ensuring your data never leaves your device unless you want it to.
-- **Beautiful Adaptive UI:** Features a dynamic material-based interface with custom dark modes, interactive color and icon pickers, and fluid empty states.
-- **MVI Architecture:** Predictable state management powered by Kotlin Coroutines (`StateFlow` / `SharedFlow`) and cleanly separated intents.
-- **Modular Codebase:** Leverages Koin for Dependency Injection and adheres to strict Clean Architecture boundaries (Domain, Data, UI).
-- **Cross-Platform Ready:** Built fundamentally with KMP principles. Currently optimized for Desktop (JVM), but architecture supports expanding to iOS, Android, and Web.
+- **Block-Based Editor**: Use Text, Heading, Checkbox, Table, and Image blocks to build your pages.
+- **Rich Text Support**: WYSIWYG formatting with Bold, Italic, and Underline.
+- **Local-First Database**: Powered by SQLDelight for fast, offline-first data persistence.
+- **Optimized Image Loading**: High-performance image rendering and caching via Landscapist (Coil 3).
+- **MVI Architecture**: Robust state management for a predictable user experience.
+- **Privacy First**: Local storage by default with optional notebook privacy settings.
 
-## Getting Started
+---
+
+## Installation
+
+### Windows (Important)
+1. Download the latest `.msi` or `.exe` from the [Releases](https://github.com/iammohdzaki/OneTask-Desktop/releases) page.
+2. When you run the installer, you may see a blue **"Windows protected your PC"** (SmartScreen) warning. 
+   - This happens because the installer is not digitally signed by a paid Certificate Authority.
+3. To proceed, click **"More info"** and then click the **"Run anyway"** button.
+4. Follow the remaining setup prompts to finish installation.
+
+### macOS
+1. Download the latest `.dmg` from the Releases page.
+2. Open the `.dmg` and drag **OneTask** into your **Applications** folder.
+
+### Linux
+1. Download the latest `.deb` package.
+2. Install via your package manager: `sudo dpkg -i onetask_xxx.deb`.
+
+---
+
+## Building Locally
 
 ### Prerequisites
+- JDK 17 or higher.
+- IntelliJ IDEA (recommended) or Android Studio.
 
-- JDK 17 or higher
-- IntelliJ IDEA or Android Studio (with the Kotlin Multiplatform plugin installed)
-
-### Running the Desktop App
-
-You can quickly launch the desktop application locally via Gradle:
-
+### Commands
+To run the desktop application:
 ```bash
-# Standard run
 ./gradlew :desktopApp:run
-
-# Hot reload (requires JetBrains Compose Plugin)
-./gradlew :desktopApp:hotRun --auto
 ```
 
-### Building for Distribution
-
-To build native distribution packages (e.g. `.dmg`, `.msi`, `.deb`) for your operating system:
-
+To build a production installer for your current OS:
 ```bash
-./gradlew :desktopApp:packageDistributionForCurrentOS
+./gradlew :desktopApp:package
 ```
-The packaged installers will be available in the `desktopApp/build/compose/binaries` directory.
 
-## Project Structure
+## Contributing
 
-- `shared/` - Contains all business logic, local database layers (SQLDelight), ViewModels, MVI components, and shared UI (Compose Multiplatform).
-- `desktopApp/` - The entry point for the desktop JVM application. Instantiates the window and supplies the driver to the shared architecture.
-- `gradle/libs.versions.toml` - Version catalog for managing external dependencies across modules.
+We welcome contributions! Please see our [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to get started.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

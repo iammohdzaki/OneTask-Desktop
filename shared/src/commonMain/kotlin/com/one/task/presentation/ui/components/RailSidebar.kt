@@ -56,13 +56,15 @@ fun RailSidebar(
             modifier = Modifier
                 .size(48.dp)
                 .clip(RoundedCornerShape(12.dp))
-                .background(MaterialTheme.colorScheme.primaryContainer)
+                .background(MaterialTheme.colorScheme.primary)
                 .clickable { },
             contentAlignment = Alignment.Center
         ) {
-            Image(
+            Icon(
                 painter = painterResource(Res.drawable.launcher),
-                contentDescription = stringResource(Res.string.app_name)
+                contentDescription = stringResource(Res.string.app_name),
+                tint = MaterialTheme.colorScheme.onPrimary,
+                modifier = Modifier.size(24.dp)
             )
         }
 

@@ -4,11 +4,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.ColorLens
-import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -42,8 +42,8 @@ fun SettingsDialog(
         ) {
             Row(
                 modifier = Modifier
-                    .width(600.dp)
-                    .height(400.dp)
+                    .width(700.dp)
+                    .height(500.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .background(MaterialTheme.colorScheme.surface)
                     .pointerInput(Unit) { detectTapGestures(onTap = {}) }
@@ -51,7 +51,7 @@ fun SettingsDialog(
                 // Sidebar
                 Column(
                     modifier = Modifier
-                        .width(200.dp)
+                        .width(220.dp)
                         .fillMaxHeight()
                         .background(MaterialTheme.colorScheme.surfaceContainerLow)
                         .padding(16.dp)
@@ -60,8 +60,12 @@ fun SettingsDialog(
                     Spacer(modifier = Modifier.height(24.dp))
                     
                     CategoryItem("Appearance", Icons.Default.ColorLens, selectedCategory == "Appearance") { selectedCategory = "Appearance" }
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
+                    CategoryItem("Editor", Icons.Default.EditNote, selectedCategory == "Editor") { selectedCategory = "Editor" }
+                    Spacer(modifier = Modifier.height(4.dp))
                     CategoryItem("Security", Icons.Default.Lock, selectedCategory == "Security") { selectedCategory = "Security" }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    CategoryItem("Data", Icons.Default.Storage, selectedCategory == "Data") { selectedCategory = "Data" }
                 }
 
                 // Content
@@ -71,36 +75,136 @@ fun SettingsDialog(
                         .fillMaxHeight()
                         .padding(24.dp)
                 ) {
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                         Text(selectedCategory, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onSurface)
-                        Icon(Icons.Default.Close, contentDescription = "Close", modifier = Modifier.size(24.dp).clickable(onClick = onDismissRequest), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        IconButton(onClick = onDismissRequest) {
+                            Icon(Icons.Default.Close, contentDescription = "Close", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
                     }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    when (selectedCategory) {
-                        "Appearance" -> {
-                            Text("Theme", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Spacer(modifier = Modifier.height(12.dp))
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                ThemeOption("System", state.themeMode == "System") { viewModel.onIntent(SettingsIntent.SetThemeMode("System")) }
-                                ThemeOption("Light", state.themeMode == "Light") { viewModel.onIntent(SettingsIntent.SetThemeMode("Light")) }
-                                ThemeOption("Dark", state.themeMode == "Dark") { viewModel.onIntent(SettingsIntent.SetThemeMode("Dark")) }
-                            }
-                        }
-                        "Security" -> {
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                                Column {
-                                    Text("Password Authentication", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
-                                    Text("Require a password to open the app", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Column(modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
+                        when (selectedCategory) {
+                            "Appearance" -> {
+                                Text("Theme", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                    ThemeOption("System", state.themeMode == "System") { viewModel.onIntent(SettingsIntent.SetThemeMode("System")) }
+                                    ThemeOption("Light", state.themeMode == "Light") { viewModel.onIntent(SettingsIntent.SetThemeMode("Light")) }
+                                    ThemeOption("Dark", state.themeMode == "Dark") { viewModel.onIntent(SettingsIntent.SetThemeMode("Dark")) }
                                 }
-                                Switch(
+                                
+                                Spacer(modifier = Modifier.height(32.dp))
+                                
+                                Text("Typography", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                    Text("Font Size", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                        IconButton(onClick = { viewModel.onIntent(SettingsIntent.SetFontSize(state.fontSize - 1)) }, enabled = state.fontSize > 12) {
+                                            Icon(Icons.Default.Remove, contentDescription = null, modifier = Modifier.size(18.dp))
+                                        }
+                                        Text("${state.fontSize}px", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                                        IconButton(onClick = { viewModel.onIntent(SettingsIntent.SetFontSize(state.fontSize + 1)) }, enabled = state.fontSize < 32) {
+                                            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                                        }
+                                    }
+                                }
+                            }
+                            "Editor" -> {
+                                SettingsSwitch(
+                                    title = "Full Width Editor",
+                                    subtitle = "Expand editor to occupy full window width",
+                                    checked = state.fullWidthEditor,
+                                    onCheckedChange = { viewModel.onIntent(SettingsIntent.SetFullWidthEditor(it)) }
+                                )
+                                Spacer(modifier = Modifier.height(24.dp))
+                                SettingsSwitch(
+                                    title = "Show Line Numbers",
+                                    subtitle = "Display line numbers in text blocks",
+                                    checked = state.showLineNumbers,
+                                    onCheckedChange = { viewModel.onIntent(SettingsIntent.SetShowLineNumbers(it)) }
+                                )
+                                Spacer(modifier = Modifier.height(24.dp))
+                                SettingsSwitch(
+                                    title = "Auto Save",
+                                    subtitle = "Automatically save changes as you type",
+                                    checked = state.autoSave,
+                                    onCheckedChange = { viewModel.onIntent(SettingsIntent.SetAutoSave(it)) }
+                                )
+                            }
+                            "Security" -> {
+                                SettingsSwitch(
+                                    title = "Password Authentication",
+                                    subtitle = "Require a password to open the app",
                                     checked = state.passwordAuthEnabled,
                                     onCheckedChange = { viewModel.onIntent(SettingsIntent.SetPasswordAuthEnabled(it)) }
                                 )
                             }
+                            "Data" -> {
+                                Text("Storage Management", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                                Spacer(modifier = Modifier.height(16.dp))
+                                DataActionItem("Export Data", "Download your workspace as a JSON file", Icons.Default.Download) { /* TODO */ }
+                                Spacer(modifier = Modifier.height(12.dp))
+                                DataActionItem("Import Data", "Restore your workspace from a backup file", Icons.Default.Upload) { /* TODO */ }
+                                Spacer(modifier = Modifier.height(24.dp))
+                                DangerActionItem("Clear All Data", "Permanently delete all notebooks, pages, and blocks", Icons.Default.DeleteForever) { /* TODO */ }
+                            }
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SettingsSwitch(title: String, subtitle: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Switch(checked = checked, onCheckedChange = onCheckedChange)
+    }
+}
+
+@Composable
+private fun DataActionItem(title: String, subtitle: String, icon: androidx.compose.ui.graphics.vector.ImageVector, onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(8.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(modifier = Modifier.width(16.dp))
+            Column {
+                Text(title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
+                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+    }
+}
+
+@Composable
+private fun DangerActionItem(title: String, subtitle: String, icon: androidx.compose.ui.graphics.vector.ImageVector, onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(8.dp),
+        color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.2f),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.3f)),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+            Spacer(modifier = Modifier.width(16.dp))
+            Column {
+                Text(title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
+                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error.copy(alpha = 0.7f))
             }
         }
     }

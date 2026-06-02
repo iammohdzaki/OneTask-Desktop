@@ -24,6 +24,26 @@ class SettingsViewModel(private val repository: SettingsRepository) : ViewModel(
                 _state.update { it.copy(passwordAuthEnabled = enabled) }
             }
         }
+        viewModelScope.launch {
+            repository.fontSize.collect { size ->
+                _state.update { it.copy(fontSize = size) }
+            }
+        }
+        viewModelScope.launch {
+            repository.fullWidthEditor.collect { enabled ->
+                _state.update { it.copy(fullWidthEditor = enabled) }
+            }
+        }
+        viewModelScope.launch {
+            repository.showLineNumbers.collect { enabled ->
+                _state.update { it.copy(showLineNumbers = enabled) }
+            }
+        }
+        viewModelScope.launch {
+            repository.autoSave.collect { enabled ->
+                _state.update { it.copy(autoSave = enabled) }
+            }
+        }
     }
 
     fun onIntent(intent: SettingsIntent) {
@@ -33,6 +53,18 @@ class SettingsViewModel(private val repository: SettingsRepository) : ViewModel(
             }
             is SettingsIntent.SetPasswordAuthEnabled -> {
                 viewModelScope.launch { repository.setPasswordAuthEnabled(intent.enabled) }
+            }
+            is SettingsIntent.SetFontSize -> {
+                viewModelScope.launch { repository.setFontSize(intent.size) }
+            }
+            is SettingsIntent.SetFullWidthEditor -> {
+                viewModelScope.launch { repository.setFullWidthEditor(intent.enabled) }
+            }
+            is SettingsIntent.SetShowLineNumbers -> {
+                viewModelScope.launch { repository.setShowLineNumbers(intent.enabled) }
+            }
+            is SettingsIntent.SetAutoSave -> {
+                viewModelScope.launch { repository.setAutoSave(intent.enabled) }
             }
         }
     }

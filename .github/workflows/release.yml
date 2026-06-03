@@ -20,8 +20,8 @@ jobs:
       matrix:
         include:
           - os: windows-latest
-            task: packageMsi
-            artifact: desktopApp/build/compose/binaries/main/msi/*.msi
+            task: packageExe
+            artifact: desktopApp/build/compose/binaries/main/exe/*.exe
           - os: ubuntu-latest
             task: packageDeb
             artifact: desktopApp/build/compose/binaries/main/deb/*.deb
@@ -69,6 +69,7 @@ jobs:
         run: |
           mkdir release_assets
           find artifacts -name "*.msi" -exec cp {} release_assets/ \;
+          find artifacts -name "*.exe" -exec cp {} release_assets/ \;
           find artifacts -name "*.deb" -exec cp {} release_assets/ \;
           find artifacts -name "*.dmg" -exec cp {} release_assets/ \;
 

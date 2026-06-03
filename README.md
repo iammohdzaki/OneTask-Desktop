@@ -23,11 +23,20 @@ OneTask is a flexible, block-based workspace application built with **Compose Mu
 ## Installation
 
 ### Windows (Important)
-1. Download the latest `.msi` or `.exe` from the [Releases](https://github.com/iammohdzaki/OneTask-Desktop/releases) page.
-2. When you run the installer, you may see a blue **"Windows protected your PC"** (SmartScreen) warning. 
-   - This happens because the installer is not digitally signed by a paid Certificate Authority.
-3. To proceed, click **"More info"** and then click the **"Run anyway"** button.
-4. Follow the remaining setup prompts to finish installation.
+
+Due to the lack of a paid digital signature (common in indie open-source projects), you may encounter two levels of Windows security:
+
+#### 1. SmartScreen Warning
+- When you run the installer, you may see a blue **"Windows protected your PC"** window.
+- Click **"More info"** and then click **"Run anyway"**.
+
+#### 2. Smart App Control (Windows 11)
+- If you have **Smart App Control** enabled, Windows may block the app entirely with no "Run anyway" button.
+- To install, you may need to:
+    - **Option A**: Temporarily or permanently disable Smart App Control in **Windows Security > App & browser control > Smart App Control settings**. *(Note: Turning this off usually requires a Windows reinstall to turn back on).*
+    - **Option B**: Build and run from source (see [Building Locally](#building-locally) below), which bypasses installer checks.
+
+---
 
 ### macOS
 1. Download the latest `.dmg` from the Releases page.

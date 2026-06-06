@@ -9,7 +9,8 @@ import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
 class AppViewModel(
-    private val repository: TaskRepository
+    private val repository: TaskRepository,
+    private val settingsRepository: com.one.task.data.SettingsRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(AppUiState())
@@ -53,8 +54,10 @@ class AppViewModel(
         viewModelScope.launch {
             repository.getAllNotebooks().collect { notebooks ->
                 _state.update { it.copy(notebooks = notebooks) }
-                if (notebooks.isEmpty()) {
-                    // Seed initial data for testing
+                
+                val hasSeeded = settingsRepository.hasSeededInitialData.first()
+                if (notebooks.isEmpty() && !hasSeeded) {
+                    // Seed initial data for new users
                     val nb = Notebook(generateUuid(), "Getting Started", iconName = "Lightbulb", colorHex = "#FFB869", isPrivate = false)
                     repository.insertNotebook(nb)
                     
@@ -64,7 +67,8 @@ class AppViewModel(
                     val blocks = InitialData.getGettingStartedBlocks()
                     
                     repository.saveBlocksForPage(p1.id, blocks)
-                } else if (_state.value.activeNotebookId == null) {
+                    settingsRepository.setHasSeededInitialData(true)
+                } else if (_state.value.activeNotebookId == null && notebooks.isNotEmpty()) {
                     selectNotebook(notebooks.first().id)
                 }
             }

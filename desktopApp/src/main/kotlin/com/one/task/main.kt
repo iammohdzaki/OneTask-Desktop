@@ -27,32 +27,38 @@ import onetask.shared.generated.resources.launcher
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
-fun main() = application {
-    Logger.i("Main", "Starting application...")
-    initKoin(DriverFactory())
+fun main() {
+    Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+        Logger.e("Main", "Unhandled exception in thread ${thread.name}", throwable)
+    }
 
-    val state = rememberWindowState(width = 1200.dp, height = 800.dp, position = WindowPosition(Alignment.Center))
+    application {
+        Logger.i("Main", "Starting application...")
+        initKoin(DriverFactory())
 
-    Window(
-        onCloseRequest = ::exitApplication,
-        state = state,
-        title = stringResource(Res.string.app_name),
-        icon = painterResource(Res.drawable.launcher),
-        undecorated = true,
-        transparent = false
-    ) {
-        App(
-            titleBar = {
-                CustomTitleBar(
-                    onClose = ::exitApplication,
-                    onMinimize = { state.isMinimized = true },
-                    onMaximize = {
-                        state.placement =
-                            if (state.placement == WindowPlacement.Maximized) WindowPlacement.Floating else WindowPlacement.Maximized
-                    }
-                )
-            }
-        )
+        val state = rememberWindowState(width = 1200.dp, height = 800.dp, position = WindowPosition(Alignment.Center))
+
+        Window(
+            onCloseRequest = ::exitApplication,
+            state = state,
+            title = stringResource(Res.string.app_name),
+            icon = painterResource(Res.drawable.launcher),
+            undecorated = true,
+            transparent = false
+        ) {
+            App(
+                titleBar = {
+                    CustomTitleBar(
+                        onClose = ::exitApplication,
+                        onMinimize = { state.isMinimized = true },
+                        onMaximize = {
+                            state.placement =
+                                if (state.placement == WindowPlacement.Maximized) WindowPlacement.Floating else WindowPlacement.Maximized
+                        }
+                    )
+                }
+            )
+        }
     }
 }
 

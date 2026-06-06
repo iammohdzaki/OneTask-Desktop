@@ -61,10 +61,10 @@ fun SettingsDialog(
                     
                     CategoryItem("Appearance", Icons.Default.ColorLens, selectedCategory == "Appearance") { selectedCategory = "Appearance" }
                     Spacer(modifier = Modifier.height(4.dp))
-                    CategoryItem("Editor", Icons.Default.EditNote, selectedCategory == "Editor") { selectedCategory = "Editor" }
-                    Spacer(modifier = Modifier.height(4.dp))
-                    CategoryItem("Security", Icons.Default.Lock, selectedCategory == "Security") { selectedCategory = "Security" }
-                    Spacer(modifier = Modifier.height(4.dp))
+                    //CategoryItem("Editor", Icons.Default.EditNote, selectedCategory == "Editor") { selectedCategory = "Editor" }
+                    //Spacer(modifier = Modifier.height(4.dp))
+                    //CategoryItem("Security", Icons.Default.Lock, selectedCategory == "Security") { selectedCategory = "Security" }
+                    //Spacer(modifier = Modifier.height(4.dp))
                     CategoryItem("Data", Icons.Default.Storage, selectedCategory == "Data") { selectedCategory = "Data" }
                 }
 
@@ -144,14 +144,92 @@ fun SettingsDialog(
                                 )
                             }
                             "Data" -> {
-                                Text("Storage Management", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
-                                Spacer(modifier = Modifier.height(16.dp))
-                                DataActionItem("Export Data", "Download your workspace as a JSON file", Icons.Default.Download) { /* TODO */ }
-                                Spacer(modifier = Modifier.height(12.dp))
-                                DataActionItem("Import Data", "Restore your workspace from a backup file", Icons.Default.Upload) { /* TODO */ }
-                                Spacer(modifier = Modifier.height(24.dp))
-                                DangerActionItem("Clear All Data", "Permanently delete all notebooks, pages, and blocks", Icons.Default.DeleteForever) { /* TODO */ }
-                            }
+                                 val filePicker = com.one.task.presentation.ui.utils.getFilePicker()
+                                 var showClearConfirm by remember { mutableStateOf(false) }
+                                 var showRestartDialog by remember { mutableStateOf(false) }
+
+                                 Text("Storage Management", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                                 Spacer(modifier = Modifier.height(16.dp))
+                                 
+                                 // Database Location
+                                 Surface(
+                                     onClick = {
+                                         filePicker.pickFolder { path ->
+                                             viewModel.onIntent(SettingsIntent.SetDatabasePath(path))
+                                             showRestartDialog = true
+                                         }
+                                     },
+                                     shape = RoundedCornerShape(8.dp),
+                                     color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                     modifier = Modifier.fillMaxWidth()
+                                 ) {
+                                     Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                                         Icon(Icons.Default.Folder, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                                         Spacer(modifier = Modifier.width(16.dp))
+                                         Column {
+                                             Text("Database Location", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
+                                             Text(state.databasePath ?: "Default (AppData/OneTask)", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                         }
+                                     }
+                                 }
+                                 
+                                 Spacer(modifier = Modifier.height(12.dp))
+
+                                 DataActionItem("Export Data", "Download your workspace as a JSON file", Icons.Default.Download) { 
+                                     viewModel.onIntent(SettingsIntent.ExportData { json ->
+                                         filePicker.saveFile("onetask_backup", json, "json")
+                                     })
+                                 }
+                                 Spacer(modifier = Modifier.height(12.dp))
+                                 DataActionItem("Import Data", "Restore your workspace from a backup file", Icons.Default.Upload) { 
+                                     filePicker.pickFile("json") { json ->
+                                         viewModel.onIntent(SettingsIntent.ImportData(json) {
+                                             onDismissRequest() // Close settings on success
+                                         })
+                                     }
+                                 }
+                                 Spacer(modifier = Modifier.height(24.dp))
+                                 DangerActionItem("Clear All Data", "Permanently delete all notebooks, pages, and blocks", Icons.Default.DeleteForever) { 
+                                     showClearConfirm = true
+                                 }
+                                 
+                                 if (showClearConfirm) {
+                                     AlertDialog(
+                                         onDismissRequest = { showClearConfirm = false },
+                                         title = { Text("Clear All Data?") },
+                                         text = { Text("This will permanently delete all your notebooks, pages, and content. This action cannot be undone.") },
+                                         confirmButton = {
+                                             TextButton(
+                                                 onClick = {
+                                                     viewModel.onIntent(SettingsIntent.ClearAllData)
+                                                     showClearConfirm = false
+                                                 },
+                                                 colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                                             ) {
+                                                 Text("Clear Everything")
+                                             }
+                                         },
+                                         dismissButton = {
+                                             TextButton(onClick = { showClearConfirm = false }) {
+                                                 Text("Cancel")
+                                             }
+                                         }
+                                     )
+                                 }
+
+                                 if (showRestartDialog) {
+                                     AlertDialog(
+                                         onDismissRequest = { showRestartDialog = false },
+                                         title = { Text("Restart Required") },
+                                         text = { Text("Changing the database location requires an application restart to take effect. Please restart the app manually.") },
+                                         confirmButton = {
+                                             TextButton(onClick = { showRestartDialog = false }) {
+                                                 Text("I Understand")
+                                             }
+                                         }
+                                     )
+                                 }
+                             }
                         }
                     }
                 }

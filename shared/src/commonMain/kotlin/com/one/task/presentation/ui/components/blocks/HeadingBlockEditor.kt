@@ -26,6 +26,7 @@ fun HeadingBlockEditor(
     onUpdate: (HeadingBlock) -> Unit,
     isActive: Boolean = false,
     onFocus: () -> Unit = {},
+    onSelectionChanged: (TextFieldValue) -> Unit = {},
     formatEvent: Pair<String, Long>? = null,
     onFormatApplied: () -> Unit = {}
 ) {
@@ -36,6 +37,13 @@ fun HeadingBlockEditor(
     LaunchedEffect(block.text) {
         if (block.text != textFieldValue.text) {
             textFieldValue = textFieldValue.copy(text = block.text)
+        }
+    }
+
+    // Report initial selection or when it changes internally
+    LaunchedEffect(textFieldValue) {
+        if (isActive) {
+            onSelectionChanged(textFieldValue)
         }
     }
 
@@ -88,6 +96,7 @@ fun HeadingBlockEditor(
             onValueChange = {
                 textFieldValue = it
                 onUpdate(block.copy(text = it.text))
+                onSelectionChanged(it)
             },
             textStyle = textStyle,
             cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),

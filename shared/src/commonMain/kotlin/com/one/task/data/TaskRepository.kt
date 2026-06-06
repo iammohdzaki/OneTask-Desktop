@@ -105,6 +105,62 @@ class TaskRepository(
         queries.deleteAllArchivedPages()
     }
 
+    suspend fun clearAllData() = withContext(dispatcher) {
+        Logger.d(TAG, "Clearing all data")
+        queries.deleteAllNotebooks()
+    }
+
+    suspend fun getFullWorkspaceBackup(): WorkspaceBackup = withContext(dispatcher) {
+        val notebooks = queries.getAllNotebooks().executeAsList().map { n ->
+            val notebook = Notebook(n.id, n.name, n.iconUrl, n.iconName, n.colorHex, n.isPrivate == 1L)
+            val pages = queries.getPagesForNotebook(n.id).executeAsList().map { p ->
+                val tags: List<String> = try { json.decodeFromString(p.tags) } catch (e: Exception) { emptyList() }
+                val page = Page(p.id, p.notebookId, p.title, p.description, p.iconName, p.updatedAt, tags, p.isArchived == 1L)
+                val blocks = queries.getBlocksForPage(p.id).executeAsList().map { b ->
+                    json.decodeFromString<ContentBlock>(b.content)
+                }
+                PageBackup(page, blocks)
+            }
+            // Also get archived pages for this notebook (queries.getPagesForNotebook filters out archived)
+            // Actually, queries.getArchivedPages is global. Let's just fetch all pages.
+            val allPagesForNotebook = queries.transactionWithResult {
+                val pEntities = database.appDatabaseQueries.getPagesForNotebook(n.id).executeAsList() + 
+                                database.appDatabaseQueries.getArchivedPages().executeAsList().filter { it.notebookId == n.id }
+                pEntities.distinctBy { it.id }.map { p ->
+                    val tags: List<String> = try { json.decodeFromString(p.tags) } catch (e: Exception) { emptyList() }
+                    val page = Page(p.id, p.notebookId, p.title, p.description, p.iconName, p.updatedAt, tags, p.isArchived == 1L)
+                    val blocks = queries.getBlocksForPage(p.id).executeAsList().map { b ->
+                        json.decodeFromString<ContentBlock>(b.content)
+                    }
+                    PageBackup(page, blocks)
+                }
+            }
+            
+            NotebookBackup(notebook, allPagesForNotebook)
+        }
+        WorkspaceBackup(notebooks)
+    }
+
+    suspend fun restoreFromBackup(backup: WorkspaceBackup) = withContext(dispatcher) {
+        queries.transaction {
+            queries.deleteAllNotebooks()
+            backup.notebooks.forEach { nbBackup ->
+                val nb = nbBackup.notebook
+                queries.insertNotebook(nb.id, nb.name, nb.iconUrl, nb.iconName, nb.colorHex, if (nb.isPrivate) 1L else 0L)
+                nbBackup.pages.forEach { pBackup ->
+                    val p = pBackup.page
+                    val tagsJson = json.encodeToString(p.tags)
+                    queries.insertPage(p.id, p.notebookId, p.title, p.description, p.iconName, p.updatedAt, tagsJson, if (p.isArchived) 1L else 0L)
+                    pBackup.blocks.forEach { block ->
+                        val contentJson = json.encodeToString(block)
+                        val type = block::class.simpleName ?: "Unknown"
+                        queries.insertBlock(block.id, p.id, type, contentJson, block.sortOrder.toLong())
+                    }
+                }
+            }
+        }
+    }
+
     // Blocks
     fun getBlocksForPage(pageId: String): Flow<List<ContentBlock>> {
         return queries.getBlocksForPage(pageId).asFlow().mapToList(dispatcher).map { list ->

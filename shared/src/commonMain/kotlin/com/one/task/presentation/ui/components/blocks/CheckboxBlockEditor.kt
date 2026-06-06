@@ -38,6 +38,7 @@ fun CheckboxBlockEditor(
     onUpdate: (CheckboxBlock) -> Unit,
     isActive: Boolean = false,
     onFocus: () -> Unit = {},
+    onSelectionChanged: (TextFieldValue) -> Unit = {},
     formatEvent: Pair<String, Long>? = null,
     onFormatApplied: () -> Unit = {}
 ) {
@@ -54,6 +55,13 @@ fun CheckboxBlockEditor(
         val newTag = block.tag ?: ""
         if (newTag != tagFieldValue.text) {
             tagFieldValue = tagFieldValue.copy(text = newTag)
+        }
+    }
+
+    // Report initial selection or when it changes internally
+    LaunchedEffect(textFieldValue) {
+        if (isActive) {
+            onSelectionChanged(textFieldValue)
         }
     }
 
@@ -118,6 +126,7 @@ fun CheckboxBlockEditor(
                 onValueChange = {
                     textFieldValue = it
                     onUpdate(block.copy(text = it.text))
+                    onSelectionChanged(it)
                 },
                 textStyle = MaterialTheme.typography.bodyLarge.copy(
                     textDecoration = if (block.isChecked) TextDecoration.LineThrough else TextDecoration.None,

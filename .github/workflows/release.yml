@@ -20,23 +20,23 @@ jobs:
       matrix:
         include:
           - os: windows-latest
-            task: packageExe
-            artifact: desktopApp/build/compose/binaries/main/exe/*.exe
+            task: packageReleaseExe
+            artifact: desktopApp/build/compose/binaries/main-release/exe/*.exe
           - os: ubuntu-latest
-            task: packageDeb
-            artifact: desktopApp/build/compose/binaries/main/deb/*.deb
+            task: packageReleaseDeb
+            artifact: desktopApp/build/compose/binaries/main-release/deb/*.deb
           - os: macos-latest
-            task: packageDmg
-            artifact: desktopApp/build/compose/binaries/main/dmg/*.dmg
+            task: packageReleaseDmg
+            artifact: desktopApp/build/compose/binaries/main-release/dmg/*.dmg
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
+          java-version: '21'
           distribution: 'temurin'
           cache: 'gradle'
 

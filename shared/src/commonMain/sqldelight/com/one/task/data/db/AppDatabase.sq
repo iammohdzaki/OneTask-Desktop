@@ -29,6 +29,11 @@ CREATE TABLE BlockEntity (
     FOREIGN KEY(pageId) REFERENCES PageEntity(id) ON DELETE CASCADE
 );
 
+CREATE INDEX idx_page_notebook ON PageEntity(notebookId);
+CREATE INDEX idx_page_archived ON PageEntity(isArchived);
+CREATE INDEX idx_block_page ON BlockEntity(pageId);
+CREATE INDEX idx_block_order ON BlockEntity(sortOrder);
+
 -- Queries
 insertNotebook:
 INSERT OR REPLACE INTO NotebookEntity(id, name, iconUrl, iconName, colorHex, isPrivate) VALUES (?, ?, ?, ?, ?, ?);
@@ -74,3 +79,6 @@ DELETE FROM BlockEntity WHERE pageId = ?;
 
 deletePage:
 DELETE FROM PageEntity WHERE id = ?;
+
+deleteAllNotebooks:
+DELETE FROM NotebookEntity;

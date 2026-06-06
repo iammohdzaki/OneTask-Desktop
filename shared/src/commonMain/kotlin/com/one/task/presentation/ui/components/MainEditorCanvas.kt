@@ -34,6 +34,15 @@ import com.one.task.domain.*
 import com.one.task.presentation.ui.components.blocks.BlockRenderer
 import onetask.shared.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.TextRange
+
+private data class FormattingState(
+    val isBold: Boolean = false,
+    val isItalic: Boolean = false,
+    val isUnderline: Boolean = false,
+    val isStrike: Boolean = false
+)
 
 @Composable
 fun MainEditorCanvas(
@@ -58,6 +67,22 @@ fun MainEditorCanvas(
 
     var activeBlockId by remember { mutableStateOf<String?>(null) }
     var pendingFormatEvent by remember { mutableStateOf<Pair<String, Long>?>(null) }
+    var activeSelection by remember { mutableStateOf(TextFieldValue()) }
+
+    val formattingState = remember(activeSelection) {
+        val text = activeSelection.text
+        val selection = activeSelection.selection
+        if (text.isEmpty()) {
+            FormattingState()
+        } else {
+            FormattingState(
+                isBold = isFormatActive(text, selection, "**"),
+                isItalic = isFormatActive(text, selection, "*"),
+                isUnderline = isFormatActive(text, selection, "__"),
+                isStrike = isFormatActive(text, selection, "~~")
+            )
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
         LazyColumn(
@@ -146,6 +171,11 @@ fun MainEditorCanvas(
                             onDelete = onDeleteBlock,
                             isActive = activeBlockId == block.id,
                             onFocus = { activeBlockId = block.id },
+                            onSelectionChanged = { 
+                                if (activeBlockId == block.id) {
+                                    activeSelection = it
+                                }
+                            },
                             formatEvent = if (activeBlockId == block.id) pendingFormatEvent else null,
                             onFormatApplied = { pendingFormatEvent = null }
                         )
@@ -164,6 +194,7 @@ fun MainEditorCanvas(
         ) {
             EditorBottomToolbar(
                 currentBlockCount = blocks.size,
+                formattingState = formattingState,
                 onAddBlock = onAddBlock,
                 onFormatClick = { pendingFormatEvent = Pair(it, com.one.task.domain.currentTimeMillis()) }
             )
@@ -174,6 +205,50 @@ fun MainEditorCanvas(
             state = listState
         )
     }
+}
+
+private fun isFormatActive(text: String, selection: TextRange, marker: String): Boolean {
+    if (text.isEmpty()) return false
+    val min = minOf(selection.start, selection.end)
+    val max = maxOf(selection.start, selection.end)
+
+    fun isMarkerAt(index: Int, m: String): Boolean {
+        if (index < 0 || index + m.length > text.length) return false
+        if (text.substring(index, index + m.length) != m) return false
+        
+        // Check for boundary to avoid matching * inside **
+        if (m == "*") {
+            val prevIsStar = index > 0 && text[index - 1] == '*'
+            val nextIsStar = index + 1 < text.length && text[index + 1] == '*'
+            if (prevIsStar || nextIsStar) return false
+        }
+        if (m == "_") {
+            val prevIsUnder = index > 0 && text[index - 1] == '_'
+            val nextIsUnder = index + 1 < text.length && text[index + 1] == '_'
+            if (prevIsUnder || nextIsUnder) return false
+        }
+        return true
+    }
+
+    // Check if selection is wrapped by markers
+    if (min >= marker.length && max <= text.length - marker.length) {
+        if (isMarkerAt(min - marker.length, marker) && isMarkerAt(max, marker)) {
+            return true
+        }
+    }
+    
+    // Also check if selection is fully inside a marked range (e.g. cursor in middle of **bold**)
+    val regex = when(marker) {
+        "**" -> Regex("(?<!\\*)\\*\\*(?!\\*)(.*?)(?<!\\*)\\*\\*(?!\\*)", RegexOption.DOT_MATCHES_ALL)
+        "*" -> Regex("(?<!\\*)\\*(?!\\*)(.*?)(?<!\\*)\\*(?!\\*)", RegexOption.DOT_MATCHES_ALL)
+        "__" -> Regex("(?<!_)__(?!_)(.*?)(?<!_)__(?!_)", RegexOption.DOT_MATCHES_ALL)
+        "~~" -> Regex("(?<!~)~~(?!~)(.*?)(?<!~)~~(?!~)", RegexOption.DOT_MATCHES_ALL)
+        else -> null
+    }
+
+    return regex?.findAll(text)?.any { match ->
+        min >= match.range.first + marker.length && max <= match.range.last - marker.length + 1
+    } ?: false
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -307,6 +382,7 @@ private data class InsertEntry(
 @Composable
 private fun EditorBottomToolbar(
     currentBlockCount: Int,
+    formattingState: FormattingState,
     onAddBlock: (ContentBlock) -> Unit,
     onFormatClick: (String) -> Unit
 ) {
@@ -340,19 +416,6 @@ private fun EditorBottomToolbar(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Formatting section
-        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            ToolbarIconButton(Icons.Default.FormatBold, "Bold") { onFormatClick("**") }
-            ToolbarIconButton(Icons.Default.FormatItalic, "Italic") { onFormatClick("*") }
-            ToolbarIconButton(Icons.Default.FormatUnderlined, "Underline") { onFormatClick("__") }
-            ToolbarIconButton(Icons.Default.FormatStrikethrough, "Strikethrough") { onFormatClick("~~") }
-        }
-
-        Box(
-            modifier = Modifier.width(1.dp).height(24.dp)
-                .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-        )
-
         // Insert section
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             blockTypes.forEach { entry ->
@@ -370,11 +433,17 @@ private fun EditorBottomToolbar(
 }
 
 @Composable
-private fun ToolbarIconButton(icon: ImageVector, description: String, onClick: () -> Unit) {
+private fun ToolbarIconButton(
+    icon: ImageVector, 
+    description: String, 
+    isActive: Boolean = false,
+    onClick: () -> Unit
+) {
     Box(
         modifier = Modifier
             .size(32.dp)
             .clip(RoundedCornerShape(8.dp))
+            .background(if (isActive) MaterialTheme.colorScheme.primaryContainer else Color.Transparent)
             .focusProperties { canFocus = false }
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
@@ -382,7 +451,7 @@ private fun ToolbarIconButton(icon: ImageVector, description: String, onClick: (
         Icon(
             imageVector = icon,
             contentDescription = description,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            tint = if (isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(20.dp)
         )
     }

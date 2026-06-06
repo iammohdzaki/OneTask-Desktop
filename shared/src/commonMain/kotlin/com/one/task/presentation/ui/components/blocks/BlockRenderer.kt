@@ -23,6 +23,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.input.TextFieldValue
 import com.one.task.domain.CheckboxBlock
 import com.one.task.domain.ContentBlock
 import com.one.task.domain.DividerBlock
@@ -41,6 +42,7 @@ fun BlockRenderer(
     onDelete: ((String) -> Unit)? = null,
     isActive: Boolean = false,
     onFocus: () -> Unit = {},
+    onSelectionChanged: (TextFieldValue) -> Unit = {},
     formatEvent: Pair<String, Long>? = null,
     onFormatApplied: () -> Unit = {}
 ) {
@@ -70,11 +72,11 @@ fun BlockRenderer(
                 .padding(horizontal = 4.dp)
         ) {
             when (block) {
-                is TextBlock -> TextBlockEditor(block, onUpdate, isActive, onFocus, formatEvent, onFormatApplied)
-                is CheckboxBlock -> CheckboxBlockEditor(block, onUpdate, isActive, onFocus, formatEvent, onFormatApplied)
+                is TextBlock -> TextBlockEditor(block, onUpdate, isActive, onFocus, onSelectionChanged, formatEvent, onFormatApplied)
+                is CheckboxBlock -> CheckboxBlockEditor(block, onUpdate, isActive, onFocus, onSelectionChanged, formatEvent, onFormatApplied)
                 is ImageBlock -> ImageBlockEditor(block) { onUpdate(it) }
                 is TableBlock -> TableBlockEditor(block) { onUpdate(it) }
-                is HeadingBlock -> HeadingBlockEditor(block, onUpdate, isActive, onFocus, formatEvent, onFormatApplied)
+                is HeadingBlock -> HeadingBlockEditor(block, onUpdate, isActive, onFocus, onSelectionChanged, formatEvent, onFormatApplied)
                 is DividerBlock -> DividerBlockEditor(block)
             }
         }

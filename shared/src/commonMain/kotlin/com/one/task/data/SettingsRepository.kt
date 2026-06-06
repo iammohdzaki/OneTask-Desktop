@@ -15,6 +15,7 @@ interface SettingsRepository {
     val fullWidthEditor: Flow<Boolean>
     val showLineNumbers: Flow<Boolean>
     val autoSave: Flow<Boolean>
+    val hasSeededInitialData: Flow<Boolean>
 
     suspend fun setThemeMode(mode: String)
     suspend fun setPasswordAuthEnabled(enabled: Boolean)
@@ -22,6 +23,9 @@ interface SettingsRepository {
     suspend fun setFullWidthEditor(enabled: Boolean)
     suspend fun setShowLineNumbers(enabled: Boolean)
     suspend fun setAutoSave(enabled: Boolean)
+    suspend fun setHasSeededInitialData(hasSeeded: Boolean)
+    suspend fun setDatabasePath(path: String?)
+    val databasePath: Flow<String?>
 }
 
 class DefaultSettingsRepository(private val dataStore: DataStore<Preferences>) : SettingsRepository {
@@ -33,6 +37,8 @@ class DefaultSettingsRepository(private val dataStore: DataStore<Preferences>) :
         val FULL_WIDTH_EDITOR = booleanPreferencesKey("full_width_editor")
         val SHOW_LINE_NUMBERS = booleanPreferencesKey("show_line_numbers")
         val AUTO_SAVE = booleanPreferencesKey("auto_save")
+        val HAS_SEEDED_INITIAL_DATA = booleanPreferencesKey("has_seeded_initial_data")
+        val DATABASE_PATH = stringPreferencesKey("database_path")
     }
 
     override val themeMode: Flow<String> = dataStore.data.map { prefs ->
@@ -57,6 +63,14 @@ class DefaultSettingsRepository(private val dataStore: DataStore<Preferences>) :
 
     override val autoSave: Flow<Boolean> = dataStore.data.map { prefs ->
         prefs[AUTO_SAVE] ?: true
+    }
+
+    override val hasSeededInitialData: Flow<Boolean> = dataStore.data.map { prefs ->
+        prefs[HAS_SEEDED_INITIAL_DATA] ?: false
+    }
+
+    override val databasePath: Flow<String?> = dataStore.data.map { prefs ->
+        prefs[DATABASE_PATH]
     }
 
     override suspend fun setThemeMode(mode: String) {
@@ -92,6 +106,22 @@ class DefaultSettingsRepository(private val dataStore: DataStore<Preferences>) :
     override suspend fun setAutoSave(enabled: Boolean) {
         dataStore.edit { prefs ->
             prefs[AUTO_SAVE] = enabled
+        }
+    }
+
+    override suspend fun setHasSeededInitialData(hasSeeded: Boolean) {
+        dataStore.edit { prefs ->
+            prefs[HAS_SEEDED_INITIAL_DATA] = hasSeeded
+        }
+    }
+
+    override suspend fun setDatabasePath(path: String?) {
+        dataStore.edit { prefs ->
+            if (path == null) {
+                prefs.remove(DATABASE_PATH)
+            } else {
+                prefs[DATABASE_PATH] = path
+            }
         }
     }
 }

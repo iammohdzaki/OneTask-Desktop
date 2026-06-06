@@ -34,6 +34,17 @@ compose.desktop {
             vendor = "OneKore"
             copyright = "Copyright (c) 2026 OneKore. All rights reserved."
 
+            buildTypes {
+                release {
+                    proguard {
+                        isEnabled.set(true)
+                        optimize.set(true)
+                        obfuscate.set(false) // Obfuscation can be tricky with Compose, starting with just shrinking
+                        configurationFiles.from(project.file("proguard-rules.pro"))
+                    }
+                }
+            }
+
             windows {
                 iconFile.set(project.file("metadata/icon.ico"))
                 menu = true // Add to Start Menu
@@ -48,5 +59,11 @@ compose.desktop {
                 iconFile.set(project.file("metadata/icon.png"))
             }
         }
+    }
+}
+
+tasks.withType<JavaExec> {
+    if (name == "run") {
+        jvmArgs("-Donetask.debug=true")
     }
 }

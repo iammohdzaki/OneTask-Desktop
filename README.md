@@ -16,7 +16,16 @@ OneTask is a flexible, block-based workspace application built with **Compose Mu
 - **Local-First Database**: Powered by SQLDelight for fast, offline-first data persistence.
 - **Optimized Image Loading**: High-performance image rendering and caching via Landscapist (Coil 3).
 - **MVI Architecture**: Robust state management for a predictable user experience.
+- **Cloud Sync**: Sync your data across devices using your own Google Drive, Dropbox, or OneDrive.
 - **Privacy First**: Local storage by default with optional notebook privacy settings.
+
+---
+
+## Cloud Sync
+
+OneTask supports **Bring Your Own Storage (BYOS)** cloud sync. This means you can sync your data for free using your existing cloud provider (Google Drive, Dropbox, OneDrive, etc.) without needing a central server.
+
+[Learn how to set up Cloud Sync →](docs/CLOUD_SYNC.md)
 
 ---
 

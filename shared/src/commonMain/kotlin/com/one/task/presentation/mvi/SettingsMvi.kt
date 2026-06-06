@@ -6,7 +6,8 @@ data class SettingsState(
     val fontSize: Int = 16,
     val fullWidthEditor: Boolean = false,
     val showLineNumbers: Boolean = false,
-    val autoSave: Boolean = true
+    val autoSave: Boolean = true,
+    val databasePath: String? = null
 )
 
 sealed interface SettingsIntent {
@@ -16,4 +17,8 @@ sealed interface SettingsIntent {
     data class SetFullWidthEditor(val enabled: Boolean) : SettingsIntent
     data class SetShowLineNumbers(val enabled: Boolean) : SettingsIntent
     data class SetAutoSave(val enabled: Boolean) : SettingsIntent
+    data object ClearAllData : SettingsIntent
+    data class SetDatabasePath(val path: String?) : SettingsIntent
+    data class ExportData(val onComplete: (String) -> Unit) : SettingsIntent
+    data class ImportData(val json: String, val onComplete: () -> Unit) : SettingsIntent
 }

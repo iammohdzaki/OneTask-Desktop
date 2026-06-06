@@ -16,8 +16,8 @@ val sharedModule = module {
     single<SettingsRepository> { DefaultSettingsRepository(get()) }
     single { createDatabase(get()) }
     single { TaskRepository(get()) }
-    factory { AppViewModel(get()) }
-    factory { SettingsViewModel(get()) }
+    factory { AppViewModel(get(), get()) }
+    factory { SettingsViewModel(get(), get()) }
 }
 
 fun initKoin(driverFactory: DriverFactory) {

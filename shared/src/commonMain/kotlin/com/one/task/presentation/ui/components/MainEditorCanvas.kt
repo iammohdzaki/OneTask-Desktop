@@ -46,6 +46,7 @@ import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.TextRange
 import com.one.task.presentation.ui.components.blocks.FormatCommand
+import androidx.compose.material.icons.filled.Link
 
 private data class FormattingState(
     val isBold: Boolean = false,
@@ -67,7 +68,8 @@ fun MainEditorCanvas(
     onRemoveTag: (String) -> Unit,
     onUpdateBlock: (ContentBlock) -> Unit,
     onAddBlock: (ContentBlock) -> Unit,
-    onDeleteBlock: (String) -> Unit
+    onDeleteBlock: (String) -> Unit,
+    onReorderBlocks: (List<ContentBlock>) -> Unit = {}
 ) {
     val listState = rememberLazyListState()
 
@@ -78,6 +80,15 @@ fun MainEditorCanvas(
     var activeBlockId by remember { mutableStateOf<String?>(null) }
     var pendingFormatCommand by remember { mutableStateOf<FormatCommand?>(null) }
     var activeSelection by remember { mutableStateOf(TextFieldValue()) }
+
+    // ── Drag-to-reorder state ────────────────────────────────────────────────
+    // Mutable local copy so we can optimistically update order during drag
+    var localBlocks by remember(pageId, blocks) { mutableStateOf(blocks) }
+    var draggingBlockId by remember { mutableStateOf<String?>(null) }
+    var accumulatedDragY by remember { mutableStateOf(0f) }
+    // Approximate row height in px — used to compute swap threshold
+    val blockRowHeightPx = 56f
+
 
     val formattingState = remember(activeSelection) {
         val text = activeSelection.text
@@ -176,7 +187,8 @@ fun MainEditorCanvas(
             }
 
             // ── Block List ────────────────────────────────────────────
-            items(blocks, key = { it.id }) { block ->
+            items(localBlocks, key = { it.id }) { block ->
+                val isDragging = draggingBlockId == block.id
                 Box(
                     modifier = Modifier
                         .animateItem(
@@ -200,7 +212,51 @@ fun MainEditorCanvas(
                             }
                         },
                         formatCommand = if (activeBlockId == block.id) pendingFormatCommand else null,
-                        onFormatApplied = { pendingFormatCommand = null }
+                        onFormatApplied = { pendingFormatCommand = null },
+                        isDragging = isDragging,
+                        onDragStart = {
+                            draggingBlockId = block.id
+                            accumulatedDragY = 0f
+                        },
+                        onDragDelta = { deltaY ->
+                            accumulatedDragY += deltaY
+                            val currentIndex = localBlocks.indexOfFirst { it.id == draggingBlockId }
+                            if (currentIndex == -1) return@BlockRenderer
+
+                            // How many rows did we cross?
+                            val steps = (accumulatedDragY / blockRowHeightPx).toInt()
+                            if (steps == 0) return@BlockRenderer
+
+                            val targetIndex = (currentIndex + steps).coerceIn(0, localBlocks.lastIndex)
+                            if (targetIndex != currentIndex) {
+                                val mutable = localBlocks.toMutableList()
+                                val item = mutable.removeAt(currentIndex)
+                                mutable.add(targetIndex, item)
+                                localBlocks = mutable
+                                // Reset accumulated delta (we moved by `steps` rows)
+                                accumulatedDragY -= steps * blockRowHeightPx
+                            }
+                        },
+                        onDragEnd = {
+                            if (draggingBlockId != null) {
+                                // Re-assign sortOrder to match visual position
+                                val reordered = localBlocks.mapIndexed { i, b ->
+                                    when (b) {
+                                        is TextBlock     -> b.copy(sortOrder = i)
+                                        is CheckboxBlock -> b.copy(sortOrder = i)
+                                        is ImageBlock    -> b.copy(sortOrder = i)
+                                        is TableBlock    -> b.copy(sortOrder = i)
+                                        is HeadingBlock  -> b.copy(sortOrder = i)
+                                        is DividerBlock  -> b.copy(sortOrder = i)
+                                        is LinkBlock     -> b.copy(sortOrder = i)
+                                    }
+                                }
+                                localBlocks = reordered
+                                onReorderBlocks(reordered)
+                            }
+                            draggingBlockId = null
+                            accumulatedDragY = 0f
+                        }
                     )
                 }
             }
@@ -391,6 +447,8 @@ private fun EditorBottomToolbar(
         { id, order -> ImageBlock(id, order, "") },
         InsertEntry(stringResource(Res.string.block_type_table), Icons.Default.TableChart)
         { id, order -> TableBlock(id, order, "", 3, 3, List(3) { List(3) { "" } }) },
+        InsertEntry("Link", Icons.Default.Link)
+        { id, order -> LinkBlock(id, order, "", "", "generic") },
     )
 
     Row(

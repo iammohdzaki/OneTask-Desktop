@@ -195,12 +195,13 @@ class AppViewModel(
             val currentBlocks = _state.value.activePageBlocks.toMutableList()
             val maxOrder = currentBlocks.maxOfOrNull { it.sortOrder } ?: -1
             val orderedBlock = when (block) {
-                is TextBlock -> block.copy(sortOrder = maxOrder + 1)
+                is TextBlock     -> block.copy(sortOrder = maxOrder + 1)
                 is CheckboxBlock -> block.copy(sortOrder = maxOrder + 1)
-                is ImageBlock -> block.copy(sortOrder = maxOrder + 1)
-                is TableBlock -> block.copy(sortOrder = maxOrder + 1)
-                is HeadingBlock -> block.copy(sortOrder = maxOrder + 1)
-                is DividerBlock -> block.copy(sortOrder = maxOrder + 1)
+                is ImageBlock    -> block.copy(sortOrder = maxOrder + 1)
+                is TableBlock    -> block.copy(sortOrder = maxOrder + 1)
+                is HeadingBlock  -> block.copy(sortOrder = maxOrder + 1)
+                is DividerBlock  -> block.copy(sortOrder = maxOrder + 1)
+                is LinkBlock     -> block.copy(sortOrder = maxOrder + 1)
             }
             currentBlocks.add(orderedBlock)
             repository.saveBlocksForPage(pageId, currentBlocks)

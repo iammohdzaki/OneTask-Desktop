@@ -1,5 +1,7 @@
 package com.one.task.presentation.ui.components.blocks
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,18 +22,24 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.onPointerEvent
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.zIndex
 import com.one.task.domain.CheckboxBlock
 import com.one.task.domain.ContentBlock
 import com.one.task.domain.DividerBlock
 import com.one.task.domain.HeadingBlock
 import com.one.task.domain.ImageBlock
+import com.one.task.domain.LinkBlock
 import com.one.task.domain.TableBlock
 import com.one.task.domain.TextBlock
 import com.one.task.domain.currentTimeMillis
+import com.one.task.presentation.ui.Motion
 import onetask.shared.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 
@@ -57,26 +65,65 @@ fun BlockRenderer(
     onFocus: () -> Unit = {},
     onSelectionChanged: (TextFieldValue) -> Unit = {},
     formatCommand: FormatCommand? = null,
-    onFormatApplied: () -> Unit = {}
+    onFormatApplied: () -> Unit = {},
+    isDragging: Boolean = false,
+    onDragStart: () -> Unit = {},
+    onDragDelta: (Float) -> Unit = {},
+    onDragEnd: () -> Unit = {}
 ) {
     var isHovered by remember { mutableStateOf(false) }
+
+    // Animate elevation when dragging
+    val elevation by animateFloatAsState(
+        targetValue = if (isDragging) 8f else 0f,
+        animationSpec = Motion.Spec.springStandard()
+    )
+    val alpha by animateFloatAsState(
+        targetValue = if (isDragging) 0.85f else 1f,
+        animationSpec = Motion.Spec.standard()
+    )
+    val scale by animateFloatAsState(
+        targetValue = if (isDragging) 1.02f else 1f,
+        animationSpec = Motion.Spec.springBouncy()
+    )
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 2.dp)
+            .zIndex(if (isDragging) 1f else 0f)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+                this.alpha = alpha
+            }
+            .then(
+                if (elevation > 0f) Modifier.shadow(elevation.dp, MaterialTheme.shapes.small)
+                else Modifier
+            )
             .onPointerEvent(PointerEventType.Enter) { isHovered = true }
             .onPointerEvent(PointerEventType.Exit) { isHovered = false },
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Drag handle — visible only on hover
+        // Drag handle — visible only on hover, triggers drag gesture
         Icon(
             imageVector = Icons.Default.DragIndicator,
             contentDescription = stringResource(Res.string.content_desc_drag_handle),
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier
                 .size(20.dp)
-                .alpha(if (isHovered) 0.6f else 0f)
+                .alpha(if (isHovered || isDragging) 0.8f else 0f)
+                .pointerInput(block.id) {
+                    detectDragGestures(
+                        onDragStart = { onDragStart() },
+                        onDragEnd = { onDragEnd() },
+                        onDragCancel = { onDragEnd() },
+                        onDrag = { change, dragAmount ->
+                            change.consume()
+                            onDragDelta(dragAmount.y)
+                        }
+                    )
+                }
         )
 
         Box(
@@ -91,6 +138,7 @@ fun BlockRenderer(
                 is TableBlock    -> TableBlockEditor(block) { onUpdate(it) }
                 is HeadingBlock  -> HeadingBlockEditor(block, onUpdate, isActive, onFocus, onSelectionChanged, formatCommand, onFormatApplied)
                 is DividerBlock  -> DividerBlockEditor(block)
+                is LinkBlock     -> LinkBlockEditor(block) { onUpdate(it) }
             }
         }
 
@@ -100,7 +148,7 @@ fun BlockRenderer(
                 onClick = { onDelete(block.id) },
                 modifier = Modifier
                     .size(28.dp)
-                    .alpha(if (isHovered) 1f else 0f)
+                    .alpha(if (isHovered && !isDragging) 1f else 0f)
             ) {
                 Icon(
                     imageVector = Icons.Default.Close,

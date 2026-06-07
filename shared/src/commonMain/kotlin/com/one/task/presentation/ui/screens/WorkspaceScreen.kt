@@ -168,6 +168,9 @@ fun WorkspaceScreen(viewModel: AppViewModel = koinViewModel()) {
                             },
                             onDeleteBlock = { blockId ->
                                 viewModel.onIntent(AppIntent.DeleteBlock(activePage.id, blockId))
+                            },
+                            onReorderBlocks = { reordered ->
+                                viewModel.onIntent(AppIntent.ReorderBlocks(activePage.id, reordered))
                             }
                         )
                     } else {

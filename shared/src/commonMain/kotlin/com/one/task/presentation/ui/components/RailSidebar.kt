@@ -17,6 +17,8 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -29,6 +31,8 @@ import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
 import com.one.task.domain.Notebook
 import com.one.task.domain.loadLocalImage
 import com.one.task.presentation.ui.utils.IconHelper
@@ -165,6 +169,35 @@ fun RailSidebar(
                             tint = iconTint,
                             modifier = Modifier.size(Dimens.iconNormal)
                         )
+                    }
+
+                    // Hover tooltip showing notebook name
+                    if (isHovered) {
+                        Popup(
+                            alignment = Alignment.CenterEnd,
+                            offset = androidx.compose.ui.unit.IntOffset(
+                                x = (Dimens.touchTarget.value * 3).toInt(),
+                                y = 0
+                            ),
+                            properties = PopupProperties(focusable = false)
+                        ) {
+                            Surface(
+                                shape = MaterialTheme.shapes.small,
+                                color = MaterialTheme.colorScheme.inverseSurface,
+                                tonalElevation = 4.dp,
+                                shadowElevation = 4.dp
+                            ) {
+                                Text(
+                                    text = notebook.name,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.inverseOnSurface,
+                                    modifier = Modifier.padding(
+                                        horizontal = Dimens.spaceXS,
+                                        vertical = Dimens.spaceXXS
+                                    )
+                                )
+                            }
+                        }
                     }
                 }
             }

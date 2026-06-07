@@ -81,3 +81,12 @@ data class DividerBlock(
     override val id: String,
     override val sortOrder: Int
 ) : ContentBlock
+
+@Serializable
+data class LinkBlock(
+    override val id: String,
+    override val sortOrder: Int,
+    var url: String = "",
+    var label: String = "",
+    var linkType: String = "generic" // "github", "generic"
+) : ContentBlock

@@ -1,10 +1,16 @@
 package com.one.task.presentation.ui.components
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import com.one.task.presentation.ui.Motion
+import com.one.task.presentation.ui.Dimens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.draw.scale
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -93,9 +99,9 @@ fun MainEditorCanvas(
             item {
                 Column(
                     modifier = Modifier
-                        .widthIn(max = 800.dp)
-                        .padding(horizontal = 32.dp)
-                        .padding(top = 16.dp, bottom = 48.dp)
+                        .widthIn(max = Dimens.maxContentWidth)
+                        .padding(horizontal = Dimens.spaceXXL)
+                        .padding(top = Dimens.spaceM, bottom = Dimens.space3XL)
                         .fillMaxWidth()
                 ) {
                     // ── Editable Page Title ───────────────────────────────────
@@ -112,7 +118,7 @@ fun MainEditorCanvas(
                         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = 4.dp),
+                            .padding(bottom = Dimens.spaceXXS),
                         decorationBox = { innerTextField ->
                             if (localTitle.isEmpty()) {
                                 Text(
@@ -140,7 +146,7 @@ fun MainEditorCanvas(
                         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = 16.dp),
+                            .padding(bottom = Dimens.spaceM),
                         decorationBox = { innerTextField ->
                             if (localDescription.isEmpty()) {
                                 Text(
@@ -161,28 +167,42 @@ fun MainEditorCanvas(
                         onRemoveTag = onRemoveTag
                     )
 
-                    Spacer(modifier = Modifier.height(32.dp))
-
-                    // ── Block List ────────────────────────────────────────────
-                    blocks.forEach { block ->
-                        BlockRenderer(
-                            block = block,
-                            onUpdate = onUpdateBlock,
-                            onDelete = onDeleteBlock,
-                            isActive = activeBlockId == block.id,
-                            onFocus = { activeBlockId = block.id },
-                            onSelectionChanged = { 
-                                if (activeBlockId == block.id) {
-                                    activeSelection = it
-                                }
-                            },
-                            formatEvent = if (activeBlockId == block.id) pendingFormatEvent else null,
-                            onFormatApplied = { pendingFormatEvent = null }
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(100.dp))
+                    Spacer(modifier = Modifier.height(Dimens.spaceXXL))
                 }
+            }
+
+            // ── Block List ────────────────────────────────────────────
+            items(blocks, key = { it.id }) { block ->
+                Box(
+                    modifier = Modifier
+                        .animateItem(
+                            fadeInSpec = Motion.Spec.enter(),
+                            fadeOutSpec = Motion.Spec.exit(),
+                            placementSpec = Motion.Spec.springStandard()
+                        )
+                        .widthIn(max = Dimens.maxContentWidth)
+                        .padding(horizontal = Dimens.spaceXXL)
+                        .fillMaxWidth()
+                ) {
+                    BlockRenderer(
+                        block = block,
+                        onUpdate = onUpdateBlock,
+                        onDelete = onDeleteBlock,
+                        isActive = activeBlockId == block.id,
+                        onFocus = { activeBlockId = block.id },
+                        onSelectionChanged = { 
+                            if (activeBlockId == block.id) {
+                                activeSelection = it
+                            }
+                        },
+                        formatEvent = if (activeBlockId == block.id) pendingFormatEvent else null,
+                        onFormatApplied = { pendingFormatEvent = null }
+                    )
+                }
+            }
+
+            item {
+                Spacer(modifier = Modifier.height(Dimens.spaceMax))
             }
         }
 
@@ -190,7 +210,7 @@ fun MainEditorCanvas(
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 24.dp)
+                .padding(bottom = Dimens.spaceXL)
         ) {
             EditorBottomToolbar(
                 currentBlockCount = blocks.size,
@@ -265,7 +285,7 @@ private fun TagRow(
     var tagInput by remember { mutableStateOf("") }
 
     Row(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(Dimens.spaceXS),
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -286,10 +306,10 @@ private fun TagRow(
                 singleLine = true,
                 modifier = Modifier
                     .widthIn(min = 80.dp, max = 200.dp)
-                    .clip(RoundedCornerShape(4.dp))
+                    .clip(MaterialTheme.shapes.extraSmall)
                     .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f))
-                    .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.4f), RoundedCornerShape(4.dp))
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                    .border(Dimens.spaceBorder, MaterialTheme.colorScheme.primary.copy(alpha = 0.4f), MaterialTheme.shapes.extraSmall)
+                    .padding(horizontal = Dimens.spaceXS, vertical = Dimens.spaceXXS)
                     .onKeyEvent { keyEvent ->
                         if (keyEvent.key == Key.Enter) {
                             if (tagInput.isNotBlank()) {
@@ -322,7 +342,7 @@ private fun TagRow(
             // "+" button to open tag input
             Box(
                 modifier = Modifier
-                    .size(24.dp)
+                    .size(Dimens.iconNormal)
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.surfaceContainerHigh)
                     .clickable { isAddingTag = true },
@@ -343,12 +363,12 @@ private fun TagRow(
 private fun TagChip(tag: String, onRemove: () -> Unit) {
     Row(
         modifier = Modifier
-            .clip(RoundedCornerShape(4.dp))
+            .clip(MaterialTheme.shapes.extraSmall)
             .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
-            .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f), RoundedCornerShape(4.dp))
-            .padding(start = 8.dp, top = 4.dp, bottom = 4.dp, end = 4.dp),
+            .border(Dimens.spaceBorder, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f), MaterialTheme.shapes.extraSmall)
+            .padding(start = Dimens.spaceXS, top = Dimens.spaceXXS, bottom = Dimens.spaceXXS, end = Dimens.spaceXXS),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
+        horizontalArrangement = Arrangement.spacedBy(Dimens.spaceXXS)
     ) {
         Text(
             text = "#$tag",
@@ -357,7 +377,7 @@ private fun TagChip(tag: String, onRemove: () -> Unit) {
         )
         IconButton(
             onClick = onRemove,
-            modifier = Modifier.size(16.dp)
+            modifier = Modifier.size(Dimens.iconSmall)
         ) {
             Icon(
                 imageVector = Icons.Default.Close,
@@ -405,19 +425,19 @@ private fun EditorBottomToolbar(
 
     Row(
         modifier = Modifier
-            .clip(RoundedCornerShape(16.dp))
+            .clip(MaterialTheme.shapes.large)
             .background(MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp))
             .border(
-                width = 1.dp,
+                width = Dimens.spaceBorder,
                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                shape = RoundedCornerShape(16.dp)
+                shape = MaterialTheme.shapes.large
             )
-            .padding(horizontal = 12.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+            .padding(horizontal = Dimens.spaceS, vertical = Dimens.spaceXS),
+        horizontalArrangement = Arrangement.spacedBy(Dimens.spaceXS),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Insert section
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(Dimens.spaceXS)) {
             blockTypes.forEach { entry ->
                 BlockTypeButton(
                     label = entry.label,
@@ -441,8 +461,8 @@ private fun ToolbarIconButton(
 ) {
     Box(
         modifier = Modifier
-            .size(32.dp)
-            .clip(RoundedCornerShape(8.dp))
+            .size(Dimens.iconLarge)
+            .clip(MaterialTheme.shapes.small)
             .background(if (isActive) MaterialTheme.colorScheme.primaryContainer else Color.Transparent)
             .focusProperties { canFocus = false }
             .clickable(onClick = onClick),
@@ -452,7 +472,7 @@ private fun ToolbarIconButton(
             imageVector = icon,
             contentDescription = description,
             tint = if (isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(20.dp)
+            modifier = Modifier.size(Dimens.iconMedium)
         )
     }
 }
@@ -466,22 +486,33 @@ private fun BlockTypeButton(
 ) {
     var isHovered by remember { mutableStateOf(false) }
 
+    val animatedBackground by animateColorAsState(
+        targetValue = if (isHovered) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f) else Color.Transparent,
+        animationSpec = Motion.Spec.standard()
+    )
+
+    val animatedScale by animateFloatAsState(
+        targetValue = if (isHovered) 1.05f else 1.0f,
+        animationSpec = Motion.Spec.springBouncy()
+    )
+
     Column(
         modifier = Modifier
-            .clip(RoundedCornerShape(12.dp))
-            .background(if (isHovered) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f) else Color.Transparent)
+            .scale(animatedScale)
+            .clip(MaterialTheme.shapes.medium)
+            .background(animatedBackground)
             .onPointerEvent(PointerEventType.Enter) { isHovered = true }
             .onPointerEvent(PointerEventType.Exit) { isHovered = false }
             .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 8.dp),
+            .padding(horizontal = Dimens.spaceS, vertical = Dimens.spaceXS),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        verticalArrangement = Arrangement.spacedBy(Dimens.spaceXXS)
     ) {
         Icon(
             imageVector = icon,
             contentDescription = label,
             tint = if (isHovered) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(24.dp)
+            modifier = Modifier.size(Dimens.iconNormal)
         )
         Text(
             text = label,

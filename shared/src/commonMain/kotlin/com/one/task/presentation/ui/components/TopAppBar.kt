@@ -3,6 +3,7 @@ package com.one.task.presentation.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -22,6 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import onetask.shared.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
+import com.one.task.presentation.ui.Dimens
 
 @Composable
 fun TopAppBar(
@@ -34,17 +36,19 @@ fun TopAppBar(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(64.dp)
+            .height(Dimens.topBarHeight)
             .background(MaterialTheme.colorScheme.surface)
-            .padding(horizontal = 32.dp),
+            .padding(horizontal = Dimens.spaceL),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.spaceXS)) {
             if (showMenuIcon) {
                 Box(
-                    modifier = Modifier.size(32.dp)
-                        .background(MaterialTheme.colorScheme.surfaceContainerHigh, CircleShape).clickable { },
+                    modifier = Modifier.size(Dimens.touchTarget)
+                        .clip(MaterialTheme.shapes.small)
+                        .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                        .clickable { },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
@@ -59,8 +63,8 @@ fun TopAppBar(
             if (onSidebarToggle != null) {
                 Box(
                     modifier = Modifier
-                        .size(32.dp)
-                        .clip(CircleShape)
+                        .size(Dimens.touchTarget)
+                        .clip(MaterialTheme.shapes.small)
                         .clickable { onSidebarToggle() },
                     contentAlignment = Alignment.Center
                 ) {
@@ -71,12 +75,14 @@ fun TopAppBar(
                         modifier = Modifier.size(20.dp)
                     )
                 }
-                Spacer(modifier = Modifier.width(4.dp))
+                Spacer(modifier = Modifier.width(Dimens.spaceXXS))
             }
 
             Box(
-                modifier = Modifier.background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(4.dp))
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                modifier = Modifier
+                    .clip(MaterialTheme.shapes.small)
+                    .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                    .padding(horizontal = Dimens.spaceXS, vertical = Dimens.spaceXXS)
             ) {
                 Text(stringResource(Res.string.topbar_editor), style = MaterialTheme.typography.labelMedium)
             }
@@ -95,20 +101,20 @@ fun TopAppBar(
             )
         }
 
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            val containerColor = if (isSaving) Color(0xFFE8F5E9) else Color(0xFFC8E6C9)
-            val contentColor = if (isSaving) Color(0xFF2E7D32) else Color(0xFF1B5E20)
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.spaceXS)) {
+            val containerColor = if (isSaving) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.tertiaryContainer
+            val contentColor = if (isSaving) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onTertiaryContainer
 
             Box(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(6.dp))
+                    .clip(MaterialTheme.shapes.small)
                     .background(containerColor)
-                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                    .padding(horizontal = Dimens.spaceXS, vertical = Dimens.spaceXXS),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = if (isSaving) stringResource(Res.string.status_saving) else stringResource(Res.string.status_saved),
-                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                    style = MaterialTheme.typography.labelSmall,
                     color = contentColor
                 )
             }

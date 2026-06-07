@@ -17,6 +17,9 @@ import onetask.shared.generated.resources.sans_medium
 import onetask.shared.generated.resources.sans_regular
 import onetask.shared.generated.resources.sans_thin
 import org.jetbrains.compose.resources.Font
+import androidx.compose.material3.Shapes
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.unit.dp
 
 val DarkColorScheme = darkColorScheme(
     primary = Color(0xFFD0BCFF),
@@ -94,15 +97,24 @@ fun SansTypography() = Typography().run {
     )
 }
 
+val AppShapes = Shapes(
+    extraSmall = RoundedCornerShape(4.dp),
+    small = RoundedCornerShape(8.dp),
+    medium = RoundedCornerShape(12.dp),
+    large = RoundedCornerShape(16.dp),
+    extraLarge = RoundedCornerShape(28.dp)
+)
+
 @Composable
 fun OneTaskTheme(
-    darkTheme: Boolean = true,
+    darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
     MaterialTheme(
         colorScheme = colorScheme,
         typography = SansTypography(),
+        shapes = AppShapes,
         content = content
     )
 }

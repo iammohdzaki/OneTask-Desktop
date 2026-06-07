@@ -4,6 +4,8 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import com.one.task.presentation.ui.Motion
+import com.one.task.presentation.ui.Dimens
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -45,17 +47,17 @@ fun RailSidebar(
 ) {
     Column(
         modifier = Modifier
-            .width(72.dp)
+            .width(Dimens.railWidth)
             .fillMaxHeight()
             .background(MaterialTheme.colorScheme.surfaceContainerLowest)
-            .padding(top = 16.dp),
+            .padding(top = Dimens.spaceM),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // App Icon
         Box(
             modifier = Modifier
-                .size(48.dp)
-                .clip(RoundedCornerShape(12.dp))
+                .size(Dimens.touchTarget)
+                .clip(MaterialTheme.shapes.medium)
                 .background(MaterialTheme.colorScheme.primary)
                 .clickable { },
             contentAlignment = Alignment.Center
@@ -64,16 +66,16 @@ fun RailSidebar(
                 painter = painterResource(Res.drawable.launcher),
                 contentDescription = stringResource(Res.string.app_name),
                 tint = MaterialTheme.colorScheme.onPrimary,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(Dimens.iconNormal)
             )
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(Dimens.spaceM))
         Box(
-            modifier = Modifier.width(32.dp).height(1.dp)
+            modifier = Modifier.width(Dimens.spaceXXL).height(Dimens.spaceBorder)
                 .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
         )
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(Dimens.spaceM))
 
         // Dynamic Notebooks
         notebooks.forEach { notebook ->
@@ -87,33 +89,33 @@ fun RailSidebar(
             // Animations
             val animatedScale by animateFloatAsState(
                 targetValue = if (isSelected) 1.15f else if (isHovered) 1.05f else 1.0f,
-                animationSpec = tween(durationMillis = 200)
+                animationSpec = Motion.Spec.springStandard()
             )
 
             val animatedBackground by animateColorAsState(
                 targetValue = if (isSelected) iconColor.copy(alpha = 0.15f)
                 else if (isHovered) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
                 else Color.Transparent,
-                animationSpec = tween(durationMillis = 200)
+                animationSpec = Motion.Spec.standard()
             )
 
             val iconTint by animateColorAsState(
                 targetValue = if (isSelected || isHovered) iconColor else MaterialTheme.colorScheme.onSurfaceVariant,
-                animationSpec = tween(durationMillis = 200)
+                animationSpec = Motion.Spec.standard()
             )
 
             val indicatorHeight by animateDpAsState(
-                targetValue = if (isSelected) 24.dp else if (isHovered) 8.dp else 0.dp,
-                animationSpec = tween(durationMillis = 200)
+                targetValue = if (isSelected) Dimens.spaceXL else if (isHovered) Dimens.spaceXS else 0.dp,
+                animationSpec = Motion.Spec.springStiff()
             )
 
             val iconVector = IconHelper.getNotebookIcon(notebook.iconName)
 
             Box(
                 modifier = Modifier
-                    .padding(bottom = 12.dp)
+                    .padding(bottom = Dimens.spaceS)
                     .fillMaxWidth()
-                    .height(48.dp),
+                    .height(Dimens.touchTarget),
                 contentAlignment = Alignment.Center
             ) {
                 // Left Indicator Line
@@ -121,7 +123,7 @@ fun RailSidebar(
                     modifier = Modifier
                         .align(Alignment.CenterStart)
                         .padding(start = 2.dp)
-                        .width(4.dp)
+                        .width(Dimens.spaceXXS)
                         .height(indicatorHeight)
                         .clip(RoundedCornerShape(2.dp))
                         .background(iconColor)
@@ -130,9 +132,9 @@ fun RailSidebar(
                 // Icon Container
                 Box(
                     modifier = Modifier
-                        .size(48.dp)
+                        .size(Dimens.touchTarget)
                         .scale(animatedScale)
-                        .clip(RoundedCornerShape(12.dp))
+                        .clip(MaterialTheme.shapes.medium)
                         .background(animatedBackground)
                         .onPointerEvent(PointerEventType.Enter) { isHovered = true }
                         .onPointerEvent(PointerEventType.Exit) { isHovered = false }
@@ -145,7 +147,7 @@ fun RailSidebar(
                             Image(
                                 bitmap = bitmap,
                                 contentDescription = notebook.name,
-                                modifier = Modifier.size(24.dp).clip(CircleShape),
+                                modifier = Modifier.size(Dimens.iconNormal).clip(CircleShape),
                                 contentScale = ContentScale.Fit
                             )
                         } else {
@@ -153,7 +155,7 @@ fun RailSidebar(
                                 iconVector,
                                 contentDescription = notebook.name,
                                 tint = iconTint,
-                                modifier = Modifier.size(24.dp)
+                                modifier = Modifier.size(Dimens.iconNormal)
                             )
                         }
                     } else {
@@ -161,7 +163,7 @@ fun RailSidebar(
                             iconVector,
                             contentDescription = notebook.name,
                             tint = iconTint,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(Dimens.iconNormal)
                         )
                     }
                 }
@@ -171,7 +173,7 @@ fun RailSidebar(
         RailIcon(
             Icons.Default.Add,
             stringResource(Res.string.add_notebook),
-            modifier = Modifier.padding(bottom = 8.dp),
+            modifier = Modifier.padding(bottom = Dimens.spaceXS),
             onClick = {
                 onCreateNotebookClick()
             }
@@ -182,7 +184,7 @@ fun RailSidebar(
         RailIcon(
             Icons.Outlined.Settings,
             stringResource(Res.string.content_desc_settings),
-            modifier = Modifier.padding(bottom = 16.dp),
+            modifier = Modifier.padding(bottom = Dimens.spaceM),
             onClick = onSettingsClick
         )
     }
@@ -201,19 +203,19 @@ fun RailIcon(
 
     val animatedBackground by animateColorAsState(
         targetValue = if (isHovered) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f) else background,
-        animationSpec = tween(durationMillis = 200)
+        animationSpec = Motion.Spec.standard()
     )
 
     val animatedScale by animateFloatAsState(
         targetValue = if (isHovered) 1.1f else 1.0f,
-        animationSpec = tween(durationMillis = 200)
+        animationSpec = Motion.Spec.springBouncy()
     )
 
     Box(
         modifier = modifier
-            .size(48.dp)
+            .size(Dimens.touchTarget)
             .scale(animatedScale)
-            .clip(RoundedCornerShape(12.dp))
+            .clip(MaterialTheme.shapes.medium)
             .background(animatedBackground)
             .onPointerEvent(PointerEventType.Enter) { isHovered = true }
             .onPointerEvent(PointerEventType.Exit) { isHovered = false }

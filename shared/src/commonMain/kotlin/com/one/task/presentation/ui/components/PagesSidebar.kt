@@ -1,9 +1,13 @@
 package com.one.task.presentation.ui.components
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.*
+import com.one.task.presentation.ui.Motion
+import com.one.task.presentation.ui.Dimens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.ui.draw.scale
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -21,6 +25,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerButton
 import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -46,12 +51,12 @@ fun PagesSidebar(
 ) {
     Column(
         modifier = Modifier
-            .width(260.dp)
+            .width(Dimens.sidebarWidth)
             .fillMaxHeight()
             .background(MaterialTheme.colorScheme.surfaceContainerLow)
-            .padding(vertical = 16.dp)
+            .padding(vertical = Dimens.spaceM)
     ) {
-        Column(modifier = Modifier.padding(start = 20.dp, end = 12.dp, bottom = 4.dp)) {
+        Column(modifier = Modifier.padding(start = Dimens.spaceL, end = Dimens.spaceS, bottom = Dimens.spaceXXS)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -66,8 +71,8 @@ fun PagesSidebar(
                 )
                 Box(
                     modifier = Modifier
-                        .size(32.dp)
-                        .clip(RoundedCornerShape(8.dp))
+                        .size(Dimens.iconLarge)
+                        .clip(MaterialTheme.shapes.small)
                         .clickable { onCreatePage() },
                     contentAlignment = Alignment.Center
                 ) {
@@ -75,7 +80,7 @@ fun PagesSidebar(
                         Icons.Default.Add,
                         contentDescription = "Add Page",
                         tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(Dimens.iconMedium)
                     )
                 }
             }
@@ -86,7 +91,7 @@ fun PagesSidebar(
             )
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(Dimens.spaceM))
 
         if (pages.isEmpty()) {
             val infiniteTransition = rememberInfiniteTransition()
@@ -100,13 +105,13 @@ fun PagesSidebar(
             )
 
             Box(
-                modifier = Modifier.weight(1f).fillMaxWidth().padding(horizontal = 24.dp),
+                modifier = Modifier.weight(1f).fillMaxWidth().padding(horizontal = Dimens.spaceXL),
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Box(
                         modifier = Modifier
-                            .size(72.dp)
+                            .size(Dimens.railWidth)
                             .clip(CircleShape)
                             .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)),
                         contentAlignment = Alignment.Center
@@ -116,36 +121,36 @@ fun PagesSidebar(
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier
-                                .size(36.dp)
+                                .size(Dimens.iconExtraLarge)
                                 .offset(y = floatOffset.dp)
                         )
                     }
-                    Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(Dimens.spaceL))
                     Text(
                         text = "It's quiet here...",
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                         color = MaterialTheme.colorScheme.onSurface
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(Dimens.spaceXS))
                     Text(
                         text = "Create a page to start capturing your thoughts and ideas.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center
                     )
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(Dimens.spaceXL))
                     Button(
                         onClick = onCreatePage,
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                        shape = RoundedCornerShape(8.dp)
+                        shape = MaterialTheme.shapes.small
                     ) {
                         Icon(
                             Icons.Default.Add,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(Dimens.iconMedium)
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(Dimens.spaceXS))
                         Text(stringResource(Res.string.create), fontWeight = FontWeight.Bold)
                     }
                 }
@@ -164,23 +169,23 @@ fun PagesSidebar(
         }
 
         // Bottom Section
-        Spacer(modifier = Modifier.height(16.dp))
-        Column(modifier = Modifier.padding(horizontal = 8.dp)) {
+        Spacer(modifier = Modifier.height(Dimens.spaceM))
+        Column(modifier = Modifier.padding(horizontal = Dimens.spaceXS)) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(8.dp))
+                    .clip(MaterialTheme.shapes.small)
                     .clickable { onOpenArchive() }
-                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                    .padding(horizontal = Dimens.spaceS, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
                     imageVector = Icons.Outlined.Archive,
                     contentDescription = stringResource(Res.string.sidebar_archive),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(Dimens.iconMedium)
                 )
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(Dimens.spaceS))
                 Text(
                     text = stringResource(Res.string.sidebar_archive),
                     style = MaterialTheme.typography.bodyMedium,
@@ -200,13 +205,28 @@ fun PageRow(
     onArchive: () -> Unit
 ) {
     var showMenu by remember { mutableStateOf(false) }
+    var isHovered by remember { mutableStateOf(false) }
 
-    Box {
+    val animatedBackground by animateColorAsState(
+        targetValue = if (isSelected) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f) 
+                      else if (isHovered) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f)
+                      else Color.Transparent,
+        animationSpec = Motion.Spec.standard()
+    )
+
+    val animatedScale by animateFloatAsState(
+        targetValue = if (isHovered && !isSelected) 1.02f else 1.0f,
+        animationSpec = Motion.Spec.springBouncy()
+    )
+
+    Box(modifier = Modifier.scale(animatedScale)) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(IntrinsicSize.Min)
-                .background(if (isSelected) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f) else Color.Transparent)
+                .background(animatedBackground)
+                .onPointerEvent(PointerEventType.Enter) { isHovered = true }
+                .onPointerEvent(PointerEventType.Exit) { isHovered = false }
                 .clickable { onSelect() }
                 .pointerInput(page.id) {
                     awaitPointerEventScope {
@@ -225,7 +245,7 @@ fun PageRow(
             // Indicator line
             Box(
                 modifier = Modifier
-                    .width(3.dp)
+                    .width(Dimens.spaceIndicator)
                     .fillMaxHeight()
                     .background(if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent)
             )
@@ -233,16 +253,16 @@ fun PageRow(
             Row(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                    .padding(horizontal = Dimens.spaceM, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
                     imageVector = IconHelper.getIcon(page.iconName),
                     contentDescription = page.iconName,
                     tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(Dimens.iconMedium)
                 )
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(Dimens.spaceS))
                 Column {
                     Text(
                         text = page.title,

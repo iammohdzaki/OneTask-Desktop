@@ -16,77 +16,51 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.one.task.domain.HeadingBlock
+import com.one.task.presentation.ui.utils.FormatEngine
 import com.one.task.presentation.ui.utils.RichTextVisualTransformation
 import onetask.shared.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun HeadingBlockEditor(
-    block: HeadingBlock, 
+    block: HeadingBlock,
     onUpdate: (HeadingBlock) -> Unit,
     isActive: Boolean = false,
     onFocus: () -> Unit = {},
     onSelectionChanged: (TextFieldValue) -> Unit = {},
-    formatEvent: Pair<String, Long>? = null,
+    formatCommand: FormatCommand? = null,
     onFormatApplied: () -> Unit = {}
 ) {
     var textFieldValue by remember(block.id) { mutableStateOf(TextFieldValue(text = block.text)) }
     val focusRequester = remember { FocusRequester() }
 
-    // Sync external changes if needed
+    // Sync external text changes without resetting the cursor
     LaunchedEffect(block.text) {
         if (block.text != textFieldValue.text) {
             textFieldValue = textFieldValue.copy(text = block.text)
         }
     }
 
-    // Report initial selection or when it changes internally
+    // Report selection changes upward
     LaunchedEffect(textFieldValue) {
-        if (isActive) {
-            onSelectionChanged(textFieldValue)
-        }
+        if (isActive) onSelectionChanged(textFieldValue)
     }
 
-    LaunchedEffect(formatEvent) {
-        if (isActive && formatEvent != null) {
-            val marker = formatEvent.first
-            val selStart = textFieldValue.selection.start
-            val selEnd = textFieldValue.selection.end
-            val min = minOf(selStart, selEnd)
-            val max = maxOf(selStart, selEnd)
-            
-            val text = textFieldValue.text
-            
-            val isAlreadyFormatted = min >= marker.length && max <= text.length - marker.length && 
-                                     text.substring(min - marker.length, min) == marker && 
-                                     text.substring(max, max + marker.length) == marker
-            
-            val newValue = if (isAlreadyFormatted) {
-                val newText = text.substring(0, min - marker.length) + text.substring(min, max) + text.substring(max + marker.length)
-                TextFieldValue(newText, TextRange(min - marker.length, max - marker.length))
-            } else if (min == max) {
-                val newText = text.substring(0, min) + marker + marker + text.substring(min)
-                TextFieldValue(newText, TextRange(min + marker.length))
-            } else {
-                val newText = text.substring(0, min) + marker + text.substring(min, max) + marker + text.substring(max)
-                TextFieldValue(newText, TextRange(min + marker.length, max + marker.length))
-            }
-            
+    // Apply format command — keyed on id so same-marker rapid clicks always fire
+    LaunchedEffect(formatCommand?.id) {
+        if (isActive && formatCommand != null) {
+            val frozenSelection = TextRange(formatCommand.selectionStart, formatCommand.selectionEnd)
+            val newValue = FormatEngine.applyFormat(textFieldValue, formatCommand.marker, frozenSelection)
             textFieldValue = newValue
             onUpdate(block.copy(text = newValue.text))
             onFormatApplied()
-            
-            try {
-                focusRequester.requestFocus()
-            } catch (e: Exception) {
-                // Focus request failed
-            }
+            try { focusRequester.requestFocus() } catch (_: Exception) {}
         }
     }
 
     val textStyle = when (block.level) {
-        1 -> MaterialTheme.typography.displaySmall.copy(color = MaterialTheme.colorScheme.onSurface)
-        2 -> MaterialTheme.typography.headlineMedium.copy(color = MaterialTheme.colorScheme.onSurface)
+        1    -> MaterialTheme.typography.displaySmall.copy(color = MaterialTheme.colorScheme.onSurface)
+        2    -> MaterialTheme.typography.headlineMedium.copy(color = MaterialTheme.colorScheme.onSurface)
         else -> MaterialTheme.typography.headlineSmall.copy(color = MaterialTheme.colorScheme.onSurface)
     }
 

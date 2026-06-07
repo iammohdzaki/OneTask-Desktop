@@ -31,8 +31,21 @@ import com.one.task.domain.HeadingBlock
 import com.one.task.domain.ImageBlock
 import com.one.task.domain.TableBlock
 import com.one.task.domain.TextBlock
+import com.one.task.domain.currentTimeMillis
 import onetask.shared.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
+
+/**
+ * Carries a format command with the selection frozen at button-click time.
+ * Must match the definition in MainEditorCanvas (same package-level concept,
+ * re-declared here for block-layer access without circular coupling).
+ */
+data class FormatCommand(
+    val marker: String,
+    val selectionStart: Int,
+    val selectionEnd: Int,
+    val id: Long = currentTimeMillis()
+)
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -43,7 +56,7 @@ fun BlockRenderer(
     isActive: Boolean = false,
     onFocus: () -> Unit = {},
     onSelectionChanged: (TextFieldValue) -> Unit = {},
-    formatEvent: Pair<String, Long>? = null,
+    formatCommand: FormatCommand? = null,
     onFormatApplied: () -> Unit = {}
 ) {
     var isHovered by remember { mutableStateOf(false) }
@@ -72,12 +85,12 @@ fun BlockRenderer(
                 .padding(horizontal = 4.dp)
         ) {
             when (block) {
-                is TextBlock -> TextBlockEditor(block, onUpdate, isActive, onFocus, onSelectionChanged, formatEvent, onFormatApplied)
-                is CheckboxBlock -> CheckboxBlockEditor(block, onUpdate, isActive, onFocus, onSelectionChanged, formatEvent, onFormatApplied)
-                is ImageBlock -> ImageBlockEditor(block) { onUpdate(it) }
-                is TableBlock -> TableBlockEditor(block) { onUpdate(it) }
-                is HeadingBlock -> HeadingBlockEditor(block, onUpdate, isActive, onFocus, onSelectionChanged, formatEvent, onFormatApplied)
-                is DividerBlock -> DividerBlockEditor(block)
+                is TextBlock     -> TextBlockEditor(block, onUpdate, isActive, onFocus, onSelectionChanged, formatCommand, onFormatApplied)
+                is CheckboxBlock -> CheckboxBlockEditor(block, onUpdate, isActive, onFocus, onSelectionChanged, formatCommand, onFormatApplied)
+                is ImageBlock    -> ImageBlockEditor(block) { onUpdate(it) }
+                is TableBlock    -> TableBlockEditor(block) { onUpdate(it) }
+                is HeadingBlock  -> HeadingBlockEditor(block, onUpdate, isActive, onFocus, onSelectionChanged, formatCommand, onFormatApplied)
+                is DividerBlock  -> DividerBlockEditor(block)
             }
         }
 

@@ -28,18 +28,19 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.one.task.domain.CheckboxBlock
 import com.one.task.presentation.ui.components.hoverableBackground
+import com.one.task.presentation.ui.utils.FormatEngine
 import com.one.task.presentation.ui.utils.RichTextVisualTransformation
 import onetask.shared.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun CheckboxBlockEditor(
-    block: CheckboxBlock, 
+    block: CheckboxBlock,
     onUpdate: (CheckboxBlock) -> Unit,
     isActive: Boolean = false,
     onFocus: () -> Unit = {},
     onSelectionChanged: (TextFieldValue) -> Unit = {},
-    formatEvent: Pair<String, Long>? = null,
+    formatCommand: FormatCommand? = null,
     onFormatApplied: () -> Unit = {}
 ) {
     var textFieldValue by remember(block.id) { mutableStateOf(TextFieldValue(text = block.text)) }
@@ -58,47 +59,20 @@ fun CheckboxBlockEditor(
         }
     }
 
-    // Report initial selection or when it changes internally
+    // Report selection changes upward
     LaunchedEffect(textFieldValue) {
-        if (isActive) {
-            onSelectionChanged(textFieldValue)
-        }
+        if (isActive) onSelectionChanged(textFieldValue)
     }
 
-    LaunchedEffect(formatEvent) {
-        if (isActive && formatEvent != null) {
-            val marker = formatEvent.first
-            val selStart = textFieldValue.selection.start
-            val selEnd = textFieldValue.selection.end
-            val min = minOf(selStart, selEnd)
-            val max = maxOf(selStart, selEnd)
-            
-            val text = textFieldValue.text
-            
-            val isAlreadyFormatted = min >= marker.length && max <= text.length - marker.length && 
-                                     text.substring(min - marker.length, min) == marker && 
-                                     text.substring(max, max + marker.length) == marker
-            
-            val newValue = if (isAlreadyFormatted) {
-                val newText = text.substring(0, min - marker.length) + text.substring(min, max) + text.substring(max + marker.length)
-                TextFieldValue(newText, TextRange(min - marker.length, max - marker.length))
-            } else if (min == max) {
-                val newText = text.substring(0, min) + marker + marker + text.substring(min)
-                TextFieldValue(newText, TextRange(min + marker.length))
-            } else {
-                val newText = text.substring(0, min) + marker + text.substring(min, max) + marker + text.substring(max)
-                TextFieldValue(newText, TextRange(min + marker.length, max + marker.length))
-            }
-            
+    // Apply format command — keyed on id so rapid same-marker clicks always fire
+    LaunchedEffect(formatCommand?.id) {
+        if (isActive && formatCommand != null) {
+            val frozenSelection = TextRange(formatCommand.selectionStart, formatCommand.selectionEnd)
+            val newValue = FormatEngine.applyFormat(textFieldValue, formatCommand.marker, frozenSelection)
             textFieldValue = newValue
             onUpdate(block.copy(text = newValue.text))
             onFormatApplied()
-            
-            try {
-                focusRequester.requestFocus()
-            } catch (e: Exception) {
-                // Ignore focus failures
-            }
+            try { focusRequester.requestFocus() } catch (_: Exception) {}
         }
     }
 

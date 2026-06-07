@@ -14,63 +14,27 @@ class RichTextVisualTransformation : VisualTransformation {
     override fun filter(text: AnnotatedString): TransformedText {
         val originalText = text.text
         
-        // Define strict markers and their styles
-        // Bold: exactly two asterisks
-        val boldRegex = Regex("(?<!\\*)\\*\\*(?!\\*)(.*?)(?<!\\*)\\*\\*(?!\\*)", RegexOption.DOT_MATCHES_ALL)
-        // Italic: exactly one asterisk
-        val italicRegex = Regex("(?<!\\*)\\*(?!\\*)(.*?)(?<!\\*)\\*(?!\\*)", RegexOption.DOT_MATCHES_ALL)
-        // Underline: exactly two underscores
-        val underlineRegex = Regex("(?<!_)__(?!_)(.*?)(?<!_)__(?!_)", RegexOption.DOT_MATCHES_ALL)
-        // Strikethrough: exactly two tildes
-        val strikeRegex = Regex("(?<!~)~~(?!~)(.*?)(?<!~)~~(?!~)", RegexOption.DOT_MATCHES_ALL)
-
         val markerIndices = mutableSetOf<Int>()
         val styles = mutableListOf<Triple<IntRange, IntRange, SpanStyle>>()
 
-        // Find all matches and record markers and styles
-        // Priority order: Bold, Underline, Strike, then Italic (to avoid single star matching double)
+        // Rely on FormatEngine's centralized, AST-like priority parsing
+        val spans = FormatEngine.parseFormats(originalText)
         
-        boldRegex.findAll(originalText).forEach { match ->
-            val contentRange = match.groups[1]?.range ?: return@forEach
-            val startMarker = match.range.first until contentRange.first
-            val endMarker = contentRange.last + 1 until match.range.last + 1
+        for (span in spans) {
+            val startMarker = span.fullRange.first until span.contentRange.first
+            val endMarker = span.contentRange.last + 1 until span.fullRange.last + 1
             
             startMarker.forEach { markerIndices.add(it) }
             endMarker.forEach { markerIndices.add(it) }
-            styles.add(Triple(match.range, contentRange, SpanStyle(fontWeight = FontWeight.Bold)))
-        }
-
-        underlineRegex.findAll(originalText).forEach { match ->
-            val contentRange = match.groups[1]?.range ?: return@forEach
-            val startMarker = match.range.first until contentRange.first
-            val endMarker = contentRange.last + 1 until match.range.last + 1
             
-            startMarker.forEach { markerIndices.add(it) }
-            endMarker.forEach { markerIndices.add(it) }
-            styles.add(Triple(match.range, contentRange, SpanStyle(textDecoration = TextDecoration.Underline)))
-        }
-
-        strikeRegex.findAll(originalText).forEach { match ->
-            val contentRange = match.groups[1]?.range ?: return@forEach
-            val startMarker = match.range.first until contentRange.first
-            val endMarker = contentRange.last + 1 until match.range.last + 1
-            
-            startMarker.forEach { markerIndices.add(it) }
-            endMarker.forEach { markerIndices.add(it) }
-            styles.add(Triple(match.range, contentRange, SpanStyle(textDecoration = TextDecoration.LineThrough)))
-        }
-
-        italicRegex.findAll(originalText).forEach { match ->
-            val contentRange = match.groups[1]?.range ?: return@forEach
-            val startMarker = match.range.first until contentRange.first
-            val endMarker = contentRange.last + 1 until match.range.last + 1
-            
-            // Check if markers are already used (e.g. bold)
-            if (markerIndices.contains(match.range.first) || markerIndices.contains(match.range.last)) return@forEach
-
-            startMarker.forEach { markerIndices.add(it) }
-            endMarker.forEach { markerIndices.add(it) }
-            styles.add(Triple(match.range, contentRange, SpanStyle(fontStyle = FontStyle.Italic)))
+            val spanStyle = when (span.marker) {
+                "**" -> SpanStyle(fontWeight = FontWeight.Bold)
+                "*"  -> SpanStyle(fontStyle = FontStyle.Italic)
+                "__" -> SpanStyle(textDecoration = TextDecoration.Underline)
+                "~~" -> SpanStyle(textDecoration = TextDecoration.LineThrough)
+                else -> continue
+            }
+            styles.add(Triple(span.fullRange, span.contentRange, spanStyle))
         }
 
         // Build visual text and mapping

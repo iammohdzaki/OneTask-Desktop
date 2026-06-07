@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.*
 import kotlin.test.*
 import kotlin.time.Duration.Companion.milliseconds
+import kotlinx.coroutines.flow.MutableStateFlow
+import com.one.task.data.SettingsRepository
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class AppViewModelTest {
@@ -24,7 +26,7 @@ class AppViewModelTest {
         AppDatabase.Schema.create(driver)
         val database = AppDatabase(driver)
         repository = TaskRepository(database, testDispatcher)
-        viewModel = AppViewModel(repository)
+        viewModel = AppViewModel(repository, FakeSettingsRepository())
     }
 
     @AfterTest

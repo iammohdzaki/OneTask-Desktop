@@ -16,85 +16,45 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.one.task.domain.TextBlock
+import com.one.task.presentation.ui.utils.FormatEngine
 import com.one.task.presentation.ui.utils.RichTextVisualTransformation
 import onetask.shared.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun TextBlockEditor(
-    block: TextBlock, 
+    block: TextBlock,
     onUpdate: (TextBlock) -> Unit,
     isActive: Boolean = false,
     onFocus: () -> Unit = {},
     onSelectionChanged: (TextFieldValue) -> Unit = {},
-    formatEvent: Pair<String, Long>? = null,
+    formatCommand: FormatCommand? = null,
     onFormatApplied: () -> Unit = {}
 ) {
     var textFieldValue by remember(block.id) { mutableStateOf(TextFieldValue(text = block.text)) }
     val focusRequester = remember { FocusRequester() }
 
-    // Sync external changes if needed
+    // Sync external text changes (e.g. from DB) without resetting the cursor
     LaunchedEffect(block.text) {
         if (block.text != textFieldValue.text) {
             textFieldValue = textFieldValue.copy(text = block.text)
         }
     }
 
-    // Report initial selection or when it changes internally
+    // Report selection changes upward so the toolbar can compute formatting state
     LaunchedEffect(textFieldValue) {
-        if (isActive) {
-            onSelectionChanged(textFieldValue)
-        }
+        if (isActive) onSelectionChanged(textFieldValue)
     }
 
-    LaunchedEffect(formatEvent) {
-        if (isActive && formatEvent != null) {
-            val marker = formatEvent.first
-            val selStart = textFieldValue.selection.start
-            val selEnd = textFieldValue.selection.end
-            val min = minOf(selStart, selEnd)
-            val max = maxOf(selStart, selEnd)
-            
-            val text = textFieldValue.text
-
-            fun isMarkerAt(index: Int, m: String): Boolean {
-                if (index < 0 || index + m.length > text.length) return false
-                if (text.substring(index, index + m.length) != m) return false
-                
-                // Ensure marker isn't part of a larger sequence of same char (e.g. * not in **)
-                val char = m[0]
-                val prevMatch = index > 0 && text[index - 1] == char
-                val nextMatch = index + m.length < text.length && text[index + m.length] == char
-                if (prevMatch || nextMatch) return false
-                
-                return true
-            }
-
-            val isAlreadyFormatted = min >= marker.length && max <= text.length - marker.length && 
-                                     isMarkerAt(min - marker.length, marker) && 
-                                     isMarkerAt(max, marker)
-            
-            val newValue = if (isAlreadyFormatted) {
-                val newText = text.substring(0, min - marker.length) + text.substring(min, max) + text.substring(max + marker.length)
-                TextFieldValue(newText, TextRange(min - marker.length, max - marker.length))
-            } else if (min == max) {
-                // For empty selection, just insert markers and place cursor in between
-                val newText = text.substring(0, min) + marker + marker + text.substring(min)
-                TextFieldValue(newText, TextRange(min + marker.length))
-            } else {
-                val newText = text.substring(0, min) + marker + text.substring(min, max) + marker + text.substring(max)
-                TextFieldValue(newText, TextRange(min + marker.length, max + marker.length))
-            }
-            
+    // Apply format command — uses the frozen selection captured at click time
+    LaunchedEffect(formatCommand?.id) {
+        if (isActive && formatCommand != null) {
+            val frozenSelection = TextRange(formatCommand.selectionStart, formatCommand.selectionEnd)
+            val newValue = FormatEngine.applyFormat(textFieldValue, formatCommand.marker, frozenSelection)
             textFieldValue = newValue
             onUpdate(block.copy(text = newValue.text))
             onFormatApplied()
-            
-            try {
-                focusRequester.requestFocus()
-            } catch (e: Exception) {
-                // Ignore focus failures
-            }
+            try { focusRequester.requestFocus() } catch (_: Exception) {}
         }
     }
 
@@ -106,7 +66,9 @@ fun TextBlockEditor(
                 onUpdate(block.copy(text = it.text))
                 onSelectionChanged(it)
             },
-            textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
+            textStyle = MaterialTheme.typography.bodyLarge.copy(
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            ),
             cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
             visualTransformation = RichTextVisualTransformation(),
             modifier = Modifier
@@ -117,8 +79,10 @@ fun TextBlockEditor(
             decorationBox = { innerTextField ->
                 if (textFieldValue.text.isEmpty()) {
                     Text(
-                        text = stringResource(Res.string.hint_type_description), 
-                        style = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
+                        text = stringResource(Res.string.hint_type_description),
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                        )
                     )
                 }
                 innerTextField()

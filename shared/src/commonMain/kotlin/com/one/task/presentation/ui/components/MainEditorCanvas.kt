@@ -1,9 +1,13 @@
 package com.one.task.presentation.ui.components
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import com.one.task.presentation.ui.Motion
 import com.one.task.presentation.ui.Dimens
+import com.one.task.presentation.ui.utils.FormatEngine
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -13,7 +17,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Subject
@@ -42,6 +45,7 @@ import onetask.shared.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.TextRange
+import com.one.task.presentation.ui.components.blocks.FormatCommand
 
 private data class FormattingState(
     val isBold: Boolean = false,
@@ -72,7 +76,7 @@ fun MainEditorCanvas(
     var localDescription by remember(pageId) { mutableStateOf(pageDescription ?: "") }
 
     var activeBlockId by remember { mutableStateOf<String?>(null) }
-    var pendingFormatEvent by remember { mutableStateOf<Pair<String, Long>?>(null) }
+    var pendingFormatCommand by remember { mutableStateOf<FormatCommand?>(null) }
     var activeSelection by remember { mutableStateOf(TextFieldValue()) }
 
     val formattingState = remember(activeSelection) {
@@ -82,10 +86,10 @@ fun MainEditorCanvas(
             FormattingState()
         } else {
             FormattingState(
-                isBold = isFormatActive(text, selection, "**"),
-                isItalic = isFormatActive(text, selection, "*"),
-                isUnderline = isFormatActive(text, selection, "__"),
-                isStrike = isFormatActive(text, selection, "~~")
+                isBold      = FormatEngine.isFormatActive(text, selection, "**"),
+                isItalic    = FormatEngine.isFormatActive(text, selection, "*"),
+                isUnderline = FormatEngine.isFormatActive(text, selection, "__"),
+                isStrike    = FormatEngine.isFormatActive(text, selection, "~~")
             )
         }
     }
@@ -190,13 +194,13 @@ fun MainEditorCanvas(
                         onDelete = onDeleteBlock,
                         isActive = activeBlockId == block.id,
                         onFocus = { activeBlockId = block.id },
-                        onSelectionChanged = { 
+                        onSelectionChanged = {
                             if (activeBlockId == block.id) {
                                 activeSelection = it
                             }
                         },
-                        formatEvent = if (activeBlockId == block.id) pendingFormatEvent else null,
-                        onFormatApplied = { pendingFormatEvent = null }
+                        formatCommand = if (activeBlockId == block.id) pendingFormatCommand else null,
+                        onFormatApplied = { pendingFormatCommand = null }
                     )
                 }
             }
@@ -215,8 +219,17 @@ fun MainEditorCanvas(
             EditorBottomToolbar(
                 currentBlockCount = blocks.size,
                 formattingState = formattingState,
+                hasActiveBlock = activeBlockId != null,
                 onAddBlock = onAddBlock,
-                onFormatClick = { pendingFormatEvent = Pair(it, com.one.task.domain.currentTimeMillis()) }
+                onFormatClick = { marker ->
+                    // Capture the selection NOW, before focus moves to the button
+                    val sel = activeSelection.selection
+                    pendingFormatCommand = FormatCommand(
+                        marker = marker,
+                        selectionStart = sel.start,
+                        selectionEnd = sel.end
+                    )
+                }
             )
         }
 
@@ -225,50 +238,6 @@ fun MainEditorCanvas(
             state = listState
         )
     }
-}
-
-private fun isFormatActive(text: String, selection: TextRange, marker: String): Boolean {
-    if (text.isEmpty()) return false
-    val min = minOf(selection.start, selection.end)
-    val max = maxOf(selection.start, selection.end)
-
-    fun isMarkerAt(index: Int, m: String): Boolean {
-        if (index < 0 || index + m.length > text.length) return false
-        if (text.substring(index, index + m.length) != m) return false
-        
-        // Check for boundary to avoid matching * inside **
-        if (m == "*") {
-            val prevIsStar = index > 0 && text[index - 1] == '*'
-            val nextIsStar = index + 1 < text.length && text[index + 1] == '*'
-            if (prevIsStar || nextIsStar) return false
-        }
-        if (m == "_") {
-            val prevIsUnder = index > 0 && text[index - 1] == '_'
-            val nextIsUnder = index + 1 < text.length && text[index + 1] == '_'
-            if (prevIsUnder || nextIsUnder) return false
-        }
-        return true
-    }
-
-    // Check if selection is wrapped by markers
-    if (min >= marker.length && max <= text.length - marker.length) {
-        if (isMarkerAt(min - marker.length, marker) && isMarkerAt(max, marker)) {
-            return true
-        }
-    }
-    
-    // Also check if selection is fully inside a marked range (e.g. cursor in middle of **bold**)
-    val regex = when(marker) {
-        "**" -> Regex("(?<!\\*)\\*\\*(?!\\*)(.*?)(?<!\\*)\\*\\*(?!\\*)", RegexOption.DOT_MATCHES_ALL)
-        "*" -> Regex("(?<!\\*)\\*(?!\\*)(.*?)(?<!\\*)\\*(?!\\*)", RegexOption.DOT_MATCHES_ALL)
-        "__" -> Regex("(?<!_)__(?!_)(.*?)(?<!_)__(?!_)", RegexOption.DOT_MATCHES_ALL)
-        "~~" -> Regex("(?<!~)~~(?!~)(.*?)(?<!~)~~(?!~)", RegexOption.DOT_MATCHES_ALL)
-        else -> null
-    }
-
-    return regex?.findAll(text)?.any { match ->
-        min >= match.range.first + marker.length && max <= match.range.last - marker.length + 1
-    } ?: false
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -403,6 +372,7 @@ private data class InsertEntry(
 private fun EditorBottomToolbar(
     currentBlockCount: Int,
     formattingState: FormattingState,
+    hasActiveBlock: Boolean,
     onAddBlock: (ContentBlock) -> Unit,
     onFormatClick: (String) -> Unit
 ) {
@@ -436,7 +406,54 @@ private fun EditorBottomToolbar(
         horizontalArrangement = Arrangement.spacedBy(Dimens.spaceXS),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Insert section
+        // ── Formatting section (only when a text block is active) ──────────
+        AnimatedVisibility(
+            visible = hasActiveBlock,
+            enter = fadeIn(animationSpec = Motion.Spec.enter()) +
+                    androidx.compose.animation.expandHorizontally(animationSpec = Motion.Spec.springStandard()),
+            exit  = fadeOut(animationSpec = Motion.Spec.exit()) +
+                    androidx.compose.animation.shrinkHorizontally(animationSpec = Motion.Spec.springStiff())
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(Dimens.spaceXXS),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                ToolbarIconButton(
+                    icon = Icons.Default.FormatBold,
+                    description = "Bold",
+                    isActive = formattingState.isBold,
+                    onClick = { onFormatClick("**") }
+                )
+                ToolbarIconButton(
+                    icon = Icons.Default.FormatItalic,
+                    description = "Italic",
+                    isActive = formattingState.isItalic,
+                    onClick = { onFormatClick("*") }
+                )
+                ToolbarIconButton(
+                    icon = Icons.Default.FormatUnderlined,
+                    description = "Underline",
+                    isActive = formattingState.isUnderline,
+                    onClick = { onFormatClick("__") }
+                )
+                ToolbarIconButton(
+                    icon = Icons.Default.FormatStrikethrough,
+                    description = "Strikethrough",
+                    isActive = formattingState.isStrike,
+                    onClick = { onFormatClick("~~") }
+                )
+
+                // Divider between format and insert sections
+                Box(
+                    modifier = Modifier
+                        .width(Dimens.spaceBorder)
+                        .height(Dimens.spaceXL)
+                        .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f))
+                )
+            }
+        }
+
+        // ── Insert section ────────────────────────────────────────────────
         Row(horizontalArrangement = Arrangement.spacedBy(Dimens.spaceXS)) {
             blockTypes.forEach { entry ->
                 BlockTypeButton(

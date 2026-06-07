@@ -13,19 +13,27 @@ import kotlin.test.assertEquals
 class FakeSettingsRepository : SettingsRepository {
     override val themeMode = MutableStateFlow("System")
     override val passwordAuthEnabled = MutableStateFlow(false)
+    override val fontSize = MutableStateFlow(16)
+    override val fullWidthEditor = MutableStateFlow(false)
+    override val showLineNumbers = MutableStateFlow(false)
+    override val autoSave = MutableStateFlow(true)
+    override val hasSeededInitialData = MutableStateFlow(false)
+    override val databasePath = MutableStateFlow<String?>(null)
 
-    override suspend fun setThemeMode(mode: String) {
-        themeMode.value = mode
-    }
-
-    override suspend fun setPasswordAuthEnabled(enabled: Boolean) {
-        passwordAuthEnabled.value = enabled
-    }
+    override suspend fun setThemeMode(mode: String) { themeMode.value = mode }
+    override suspend fun setPasswordAuthEnabled(enabled: Boolean) { passwordAuthEnabled.value = enabled }
+    override suspend fun setFontSize(size: Int) { fontSize.value = size }
+    override suspend fun setFullWidthEditor(enabled: Boolean) { fullWidthEditor.value = enabled }
+    override suspend fun setShowLineNumbers(enabled: Boolean) { showLineNumbers.value = enabled }
+    override suspend fun setAutoSave(enabled: Boolean) { autoSave.value = enabled }
+    override suspend fun setHasSeededInitialData(hasSeeded: Boolean) { hasSeededInitialData.value = hasSeeded }
+    override suspend fun setDatabasePath(path: String?) { databasePath.value = path }
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SettingsViewModelTest {
     private lateinit var repository: FakeSettingsRepository
+    private lateinit var taskRepository: com.one.task.data.TaskRepository
     private lateinit var viewModel: SettingsViewModel
     private val testDispatcher = UnconfinedTestDispatcher()
 
@@ -33,7 +41,10 @@ class SettingsViewModelTest {
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         repository = FakeSettingsRepository()
-        viewModel = SettingsViewModel(repository)
+        val driver = app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver(app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver.IN_MEMORY)
+        com.one.task.data.db.AppDatabase.Schema.create(driver)
+        taskRepository = com.one.task.data.TaskRepository(com.one.task.data.db.AppDatabase(driver), testDispatcher)
+        viewModel = SettingsViewModel(repository, taskRepository)
     }
 
     @AfterTest

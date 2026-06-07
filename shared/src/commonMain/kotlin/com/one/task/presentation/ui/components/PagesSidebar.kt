@@ -39,6 +39,8 @@ import onetask.shared.generated.resources.create
 import onetask.shared.generated.resources.sidebar_archive
 import onetask.shared.generated.resources.sidebar_pages
 import org.jetbrains.compose.resources.stringResource
+import com.one.task.domain.currentTimeMillis
+import kotlinx.coroutines.delay
 
 @Composable
 fun PagesSidebar(
@@ -49,6 +51,16 @@ fun PagesSidebar(
     onArchivePage: (String) -> Unit,
     onOpenArchive: () -> Unit
 ) {
+    val lastEditedTime = pages.maxOfOrNull { it.updatedAt }
+    var now by remember { mutableStateOf(currentTimeMillis()) }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(60000)
+            now = currentTimeMillis()
+        }
+    }
+
     Column(
         modifier = Modifier
             .width(Dimens.sidebarWidth)
@@ -84,11 +96,13 @@ fun PagesSidebar(
                     )
                 }
             }
-            Text(
-                "Last edited 2m ago",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            if (lastEditedTime != null) {
+                Text(
+                    "Last edited ${formatRelativeTime(lastEditedTime, now)}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(Dimens.spaceM))
@@ -303,4 +317,27 @@ fun PageRow(
             )
         }
     }
+}
+
+private fun formatRelativeTime(updatedAt: Long, now: Long): String {
+    val diffMillis = now - updatedAt
+    if (diffMillis < 0) return "Just now"
+    
+    val diffSeconds = diffMillis / 1000
+    if (diffSeconds < 60) return "Just now"
+    
+    val diffMinutes = diffSeconds / 60
+    if (diffMinutes < 60) return "${diffMinutes}m ago"
+    
+    val diffHours = diffMinutes / 60
+    if (diffHours < 24) return "${diffHours}h ago"
+    
+    val diffDays = diffHours / 24
+    if (diffDays < 30) return "${diffDays}d ago"
+    
+    val diffMonths = diffDays / 30
+    if (diffMonths < 12) return "${diffMonths}mo ago"
+    
+    val diffYears = diffMonths / 12
+    return "${diffYears}y ago"
 }

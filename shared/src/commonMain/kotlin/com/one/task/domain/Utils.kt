@@ -10,5 +10,4 @@ fun pickImageFile(): String? {
     return pickFile("Select Image", listOf("png", "jpg", "jpeg", "svg"))
 }
 expect fun loadLocalImage(path: String): ImageBitmap?
-
 expect suspend fun loadNetworkImage(url: String): ImageBitmap?

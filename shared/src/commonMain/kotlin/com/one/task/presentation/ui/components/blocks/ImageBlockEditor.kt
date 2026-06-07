@@ -8,6 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.outlined.Image
+import androidx.compose.material.icons.outlined.BrokenImage
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,6 +26,13 @@ import com.skydoves.landscapist.ImageOptions
 import com.skydoves.landscapist.coil3.CoilImage
 import onetask.shared.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
+import okio.Path.Companion.toPath
+import androidx.compose.foundation.Image
+import androidx.compose.ui.graphics.ImageBitmap
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import com.one.task.domain.loadLocalImage
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -123,22 +131,76 @@ fun ImageBlockEditor(block: ImageBlock, onUpdate: (ImageBlock) -> Unit) {
                 .clickable(enabled = isEditing) {
                     val path = pickImageFile()
                     if (path != null) {
-                        onUpdate(block.copy(localPath = "file://\$path"))
+                        onUpdate(block.copy(localPath = "file://$path"))
                     }
                 },
             contentAlignment = Alignment.Center
         ) {
-            val imageSource = if (!block.url.isNullOrBlank()) block.url else if (block.localPath.isNotBlank()) block.localPath else null
-            
-            if (imageSource != null) {
+            if (!block.url.isNullOrBlank()) {
                 CoilImage(
-                    imageModel = { imageSource },
+                    imageModel = { block.url },
                     imageOptions = ImageOptions(
                         contentScale = ContentScale.Crop,
                         alignment = Alignment.Center
                     ),
                     modifier = Modifier.fillMaxSize()
                 )
+            } else if (block.localPath.isNotBlank()) {
+                var pathStr = block.localPath.removePrefix("file://")
+                if (pathStr.startsWith("/") && pathStr.drop(1).contains(":")) {
+                    pathStr = pathStr.removePrefix("/")
+                }
+                
+                var bitmap by remember(pathStr) { mutableStateOf<ImageBitmap?>(null) }
+                var loadFailed by remember(pathStr) { mutableStateOf(false) }
+
+                LaunchedEffect(pathStr) {
+                    println("ImageBlockEditor: Attempting to load image.")
+                    println("ImageBlockEditor: Original block.localPath = ${block.localPath}")
+                    println("ImageBlockEditor: Cleaned pathStr = $pathStr")
+                    withContext(Dispatchers.IO) {
+                        try {
+                            val loaded = loadLocalImage(pathStr)
+                            if (loaded != null) {
+                                println("ImageBlockEditor: Successfully loaded image bitmap.")
+                                bitmap = loaded
+                            } else {
+                                println("ImageBlockEditor: loadLocalImage returned null.")
+                                loadFailed = true
+                            }
+                        } catch (e: Exception) {
+                            println("ImageBlockEditor: Exception while loading image: ${e.message}")
+                            e.printStackTrace()
+                            loadFailed = true
+                        }
+                    }
+                }
+
+                if (bitmap != null) {
+                    Image(
+                        bitmap = bitmap!!,
+                        contentDescription = block.caption,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else if (loadFailed) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(
+                            Icons.Outlined.BrokenImage,
+                            contentDescription = "Image not found",
+                            tint = MaterialTheme.colorScheme.error.copy(alpha = 0.8f),
+                            modifier = Modifier.size(48.dp)
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            "Image file moved or deleted", 
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
+                        )
+                    }
+                } else {
+                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                }
             } else {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(

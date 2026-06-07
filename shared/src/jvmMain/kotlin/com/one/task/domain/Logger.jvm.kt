@@ -17,8 +17,14 @@ actual object Logger {
             val dir = File(getAppDataDir(), "logs")
             if (!dir.exists()) dir.mkdirs()
             
-            val timestamp = SimpleDateFormat("yyyyMMdd").format(Date())
-            logFile = File(dir, "app_$timestamp.log")
+            // Clear old date-based logs if they exist
+            dir.listFiles()?.filter { it.name.startsWith("app_") && it.name.endsWith(".log") }?.forEach { it.delete() }
+            
+            logFile = File(dir, "app.log")
+            if (logFile?.exists() == true) {
+                logFile?.delete()
+            }
+            logFile?.createNewFile()
         } catch (e: Exception) {
             e.printStackTrace()
         }

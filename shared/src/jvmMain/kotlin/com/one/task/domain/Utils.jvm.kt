@@ -43,7 +43,6 @@ actual suspend fun loadNetworkImage(url: String): ImageBitmap? = withContext(Dis
     try {
         URI(url).toURL().openStream().buffered().use { it.readAllBytes().decodeToImageBitmap() }
     } catch (e: Exception) {
-        e.printStackTrace()
         null
     }
 }

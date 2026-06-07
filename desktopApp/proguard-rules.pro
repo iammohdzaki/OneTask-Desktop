@@ -7,6 +7,10 @@
 -keep class com.one.task.data.db.** { *; }
 -keep interface app.cash.sqldelight.** { *; }
 
+# SQLite JDBC Driver
+-keep class org.sqlite.** { *; }
+-keep class * implements java.sql.Driver { *; }
+
 # Koin rules
 -keep class org.koin.** { *; }
 
@@ -27,9 +31,12 @@
 -dontwarn android.security.**
 -dontwarn android.net.**
 
-# OkHttp/Coil warnings
+# OkHttp/Coil warnings & rules
 -dontwarn okhttp3.**
 -dontwarn okio.**
+-keep class okio.** { *; }
+-keep class okhttp3.** { *; }
+-keep class coil3.** { *; }
 -dontwarn org.conscrypt.**
 -dontwarn org.bouncycastle.**
 -dontwarn org.openjsse.**

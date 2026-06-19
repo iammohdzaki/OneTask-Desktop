@@ -1,25 +1,19 @@
 package com.one.task.presentation.ui
 
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Typography
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.dp
 import onetask.shared.generated.resources.Res.font
 import onetask.shared.generated.resources.sans_bold
 import onetask.shared.generated.resources.sans_medium
 import onetask.shared.generated.resources.sans_regular
 import onetask.shared.generated.resources.sans_thin
 import org.jetbrains.compose.resources.Font
-import androidx.compose.material3.Shapes
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.unit.dp
 
 val DarkColorScheme = darkColorScheme(
     primary = Color(0xFFD0BCFF),
@@ -105,13 +99,14 @@ val AppShapes = Shapes(
     extraLarge = RoundedCornerShape(28.dp)
 )
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun OneTaskTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
-    MaterialTheme(
+    MaterialExpressiveTheme(
         colorScheme = colorScheme,
         typography = SansTypography(),
         shapes = AppShapes,

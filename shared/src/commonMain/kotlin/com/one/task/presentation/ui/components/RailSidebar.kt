@@ -3,7 +3,6 @@ package com.one.task.presentation.ui.components
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import com.one.task.presentation.ui.Motion
 import com.one.task.presentation.ui.Dimens
 import androidx.compose.foundation.Image

@@ -44,7 +44,6 @@ import com.one.task.presentation.ui.components.blocks.BlockRenderer
 import onetask.shared.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.TextRange
 import com.one.task.presentation.ui.components.blocks.FormatCommand
 import androidx.compose.material.icons.filled.Link
 

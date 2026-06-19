@@ -5,8 +5,7 @@ import androidx.datastore.preferences.core.Preferences
 import java.io.File
 
 actual fun createDataStore(): DataStore<Preferences> {
-    val appDataPath = System.getenv("APPDATA") ?: System.getProperty("user.home")
-    val dataStoreDir = File(appDataPath, "OneTask")
+    val dataStoreDir = getAppDataDir()
     if (!dataStoreDir.exists()) {
         dataStoreDir.mkdirs()
     }

@@ -14,8 +14,8 @@ import com.one.task.presentation.mvi.SettingsViewModel
 val sharedModule = module {
     single { createDataStore() }
     single<SettingsRepository> { DefaultSettingsRepository(get()) }
-    single { createDatabase(get()) }
-    single { TaskRepository(get()) }
+    single(createdAtStart = true) { createDatabase(get()) }
+    single(createdAtStart = true) { TaskRepository(get()) }
     factory { AppViewModel(get(), get()) }
     factory { SettingsViewModel(get(), get()) }
 }

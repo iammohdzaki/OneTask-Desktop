@@ -30,6 +30,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
@@ -173,12 +174,14 @@ fun RailSidebar(
 
                     // Hover tooltip showing notebook name
                     if (isHovered) {
+                        val density = LocalDensity.current
+                        // CenterStart anchors the popup's LEFT edge at the parent's left edge,
+                        // centered vertically. Shifting right by touchTarget+gap places it
+                        // just past the icon's right edge with a small breathing gap.
+                        val xOffsetPx = with(density) { (Dimens.touchTarget + Dimens.spaceXXS).roundToPx() }
                         Popup(
-                            alignment = Alignment.CenterEnd,
-                            offset = androidx.compose.ui.unit.IntOffset(
-                                x = (Dimens.touchTarget.value * 3).toInt(),
-                                y = 0
-                            ),
+                            alignment = Alignment.CenterStart,
+                            offset = androidx.compose.ui.unit.IntOffset(x = xOffsetPx, y = 0),
                             properties = PopupProperties(focusable = false)
                         ) {
                             Surface(

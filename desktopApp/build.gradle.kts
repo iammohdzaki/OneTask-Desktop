@@ -61,9 +61,3 @@ compose.desktop {
         }
     }
 }
-
-tasks.withType<JavaExec> {
-    if (name == "run") {
-        jvmArgs("-Donetask.debug=true")
-    }
-}

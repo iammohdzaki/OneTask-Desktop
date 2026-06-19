@@ -130,7 +130,11 @@ fun TableBlockEditor(block: TableBlock, onUpdate: (TableBlock) -> Unit) {
         // Table Content
         Column(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
             block.data.forEachIndexed { rowIndex, rowData ->
-                Row(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(IntrinsicSize.Min)   // all cells in a row match the tallest cell
+                ) {
                     rowData.forEachIndexed { colIndex, cellText ->
                         TableCell(
                             text = cellText,
@@ -172,6 +176,7 @@ private fun RowScope.TableCell(
     Box(
         modifier = Modifier
             .weight(1f)
+            .fillMaxHeight()   // stretch to the row height set by IntrinsicSize.Min
             .border(0.5.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
             .background(if (isFirstRow) MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.3f) else Color.Transparent)
             .padding(8.dp)

@@ -17,14 +17,27 @@ actual object Logger {
             val dir = File(getAppDataDir(), "logs")
             if (!dir.exists()) dir.mkdirs()
             
-            // Clear old date-based logs if they exist
-            dir.listFiles()?.filter { it.name.startsWith("app_") && it.name.endsWith(".log") }?.forEach { it.delete() }
-            
             logFile = File(dir, "app.log")
             if (logFile?.exists() == true) {
                 logFile?.delete()
             }
             logFile?.createNewFile()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    /**
+     * Performs heavy IO operations like clearing old logs.
+     * Should be called from a background thread during app startup.
+     */
+    fun initializeAsync() {
+        try {
+            val dir = File(getAppDataDir(), "logs")
+            if (dir.exists()) {
+                // Clear old date-based logs if they exist
+                dir.listFiles()?.filter { it.name.startsWith("app_") && it.name.endsWith(".log") }?.forEach { it.delete() }
+            }
         } catch (e: Exception) {
             e.printStackTrace()
         }

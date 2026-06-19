@@ -182,7 +182,6 @@ fun MainEditorCanvas(
                         onRemoveTag = onRemoveTag
                     )
 
-                    Spacer(modifier = Modifier.height(Dimens.spaceXXL))
                 }
             }
 
@@ -197,7 +196,7 @@ fun MainEditorCanvas(
                             placementSpec = Motion.Spec.springStandard()
                         )
                         .widthIn(max = Dimens.maxContentWidth)
-                        .padding(horizontal = Dimens.spaceXXL)
+                        .padding(horizontal = Dimens.spaceXL)
                         .fillMaxWidth()
                 ) {
                     BlockRenderer(
